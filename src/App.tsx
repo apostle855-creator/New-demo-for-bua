@@ -2,39 +2,36 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Folder,
   ArrowUpRight,
-  Upload,
+  Download,
+  Eye,
+  MessageSquare,
   Sparkles,
+  Shield,
   Search,
+  Upload,
   Check,
   CheckCircle,
-  Eye,
-  Download,
-  Flag,
-  MessageSquare,
-  Users,
-  Shield,
+  Clock,
+  Send,
+  Lock,
+  LogOut,
   Trash2,
-  RotateCcw,
-  Plus,
+  Key,
+  ChevronRight,
   Calculator,
   Timer,
   Play,
   Pause,
-  Lightbulb,
-  Copy,
-  LogOut,
-  Key,
+  RotateCcw,
+  Plus,
   X,
   FileText,
-  Clock,
-  ChevronRight,
-  Menu
+  AlertCircle
 } from 'lucide-react';
 import {
   AcademicResource,
   PendingUpload,
   ComplaintTicket,
-  Leader,
   AuditLog
 } from './types';
 import {
@@ -47,57 +44,45 @@ import {
   dbDelete,
   seedInitialData,
   logAuditAction,
-  INITIAL_RESOURCES,
-  INITIAL_LEADERSHIP
+  INITIAL_RESOURCES
 } from './storage';
 
 export default function App() {
-  // Navigation & UI State
-  const [activeSection, setActiveSection] = useState<'resources' | 'upload' | 'assistant' | 'suggestions' | 'leadership' | 'admin'>('resources');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Navigation: 4 Core Pillars
+  const [activeTab, setActiveTab] = useState<'drive' | 'assistant' | 'suggestions' | 'admin'>('drive');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Resources state
+  // Drive & Resource Bank State
   const [resources, setResources] = useState<AcademicResource[]>([]);
-  const [sourceFilter, setSourceFilter] = useState<'ALL' | 'VERIFIED' | 'STUDENT_UPLOADS'>('ALL');
   const [levelFilter, setLevelFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
-  const [courseChipFilter, setCourseChipFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewResource, setPreviewResource] = useState<AcademicResource | null>(null);
-  const [reportModalResource, setReportModalResource] = useState<AcademicResource | null>(null);
-  const [reportReason, setReportReason] = useState('Outdated Content');
-  const [reportNotes, setReportNotes] = useState('');
 
-  // Student Upload state
+  // Student Upload State
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadLevel, setUploadLevel] = useState('100 Level');
   const [uploadCategory, setUploadCategory] = useState('Lecture Note');
   const [uploadCourseCode, setUploadCourseCode] = useState('BUS 101');
-  const [uploadCourseTitle, setUploadCourseTitle] = useState('');
   const [uploadDocTitle, setUploadDocTitle] = useState('');
-  const [uploadDescription, setUploadDescription] = useState('');
   const [uploadUploaderName, setUploadUploaderName] = useState('');
-  const [uploadContact, setUploadContact] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
   const [uploadResultTrackingId, setUploadResultTrackingId] = useState<string | null>(null);
-  const [uploadTab, setUploadTab] = useState<'submit' | 'live_uploads' | 'track'>('submit');
-  const [trackSearchId, setTrackSearchId] = useState('');
-  const [trackedUpload, setTrackedUpload] = useState<PendingUpload | null>(null);
-  const [trackSearched, setTrackSearched] = useState(false);
 
-  // AI Assistant & Academic Toolkit Tabs
-  const [aiTab, setAiTab] = useState<'tutor' | 'cgpa' | 'timer' | 'research'>('tutor');
+  // Offline AI Assistant & Tools State
+  const [aiSubTab, setAiSubTab] = useState<'chat' | 'cgpa' | 'timer'>('chat');
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'bot'; text: string; time?: string }>>([
     {
       role: 'bot',
-      text: "Hello. I am your academic assistant for the Department of Business Administration. Ask me about Henri Fayol's 14 principles of management, Max Weber's bureaucratic model, the 5.0 CGPA scale, final year project frameworks (Chapters 1 through 5), or how to access materials on Google Drive.",
-      time: 'Just now'
+      text: "Hello! I am your Department of Business Administration Academic Assistant. Ask me anything about Henri Fayol's 14 principles, Max Weber's bureaucracy, 5.0 CGPA calculations, final year project frameworks (Chapters 1 to 5), or core course syllabi.",
+      time: 'Now'
     }
   ]);
   const [chatInput, setChatInput] = useState('');
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // CGPA Calculator state
+  // CGPA Calculator State
   const [cgpaCourses, setCgpaCourses] = useState<Array<{ id: string; code: string; units: number; grade: string }>>([
     { id: '1', code: 'BUS 101', units: 3, grade: 'A' },
     { id: '2', code: 'BUS 103', units: 3, grade: 'B' },
@@ -108,20 +93,17 @@ export default function App() {
   const [prevCgpa, setPrevCgpa] = useState<string>('');
   const [prevUnits, setPrevUnits] = useState<string>('');
 
-  // Study Focus Timer state
+  // Study Timer State
   const [timerSeconds, setTimerSeconds] = useState(25 * 60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState<'study' | 'break'>('study');
-  const [studySessionsCompleted, setStudySessionsCompleted] = useState(0);
+  const [sessionsDone, setSessionsDone] = useState(0);
 
-  // Research Topic Generator state
-  const [projectArea, setProjectArea] = useState('General Management');
-  const [generatedTopics, setGeneratedTopics] = useState<string[]>([]);
-
-  // Complaints / Suggestions state
-  const [feedbackTab, setFeedbackTab] = useState<'submit' | 'track'>('submit');
+  // Suggestion Box State
+  const [suggestionView, setSuggestionView] = useState<'submit' | 'track'>('submit');
   const [fbMatric, setFbMatric] = useState('');
   const [fbName, setFbName] = useState('');
+  const [fbIsAnonymous, setFbIsAnonymous] = useState(false);
   const [fbLevel, setFbLevel] = useState('100 Level');
   const [fbCategory, setFbCategory] = useState('Course Materials');
   const [fbSubject, setFbSubject] = useState('');
@@ -130,46 +112,25 @@ export default function App() {
   const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(null);
   const [trackTicketInput, setTrackTicketInput] = useState('');
   const [trackedTicket, setTrackedTicket] = useState<ComplaintTicket | null>(null);
-  const [trackTicketSearched, setTrackTicketSearched] = useState(false);
+  const [trackSearched, setTrackSearched] = useState(false);
 
-  // Leadership state
-  const [leadership, setLeadership] = useState<Leader[]>(INITIAL_LEADERSHIP);
-
-  // EXCOS Admin state
-  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
-  const [adminPinInput, setAdminPinInput] = useState('');
-  const [adminAuthError, setAdminAuthError] = useState(false);
+  // Admin Space State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [adminTab, setAdminTab] = useState<'pending' | 'resources' | 'recycle' | 'tickets' | 'leadership' | 'pin' | 'audit'>('pending');
-  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
-  const [recycledResources, setRecycledResources] = useState<AcademicResource[]>([]);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const [adminPinError, setAdminPinError] = useState(false);
   const [allTickets, setAllTickets] = useState<ComplaintTicket[]>([]);
+  const [adminActiveTab, setAdminActiveTab] = useState<'tickets' | 'resources' | 'settings'>('tickets');
+  const [ticketReplyModal, setTicketReplyModal] = useState<ComplaintTicket | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyStatus, setReplyStatus] = useState<'Pending' | 'Under Review' | 'Resolved'>('Resolved');
+  const [newAdminPin, setNewAdminPin] = useState('');
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  // Dialog Modals (Replacing blocking prompt() and confirm())
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmText?: string;
-    confirmColor?: string;
-    onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-
-  const [promptModal, setPromptModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    label: string;
-    initialValue?: string;
-    placeholder?: string;
-    onSubmit: (val: string) => void;
-  }>({ isOpen: false, title: '', label: '', onSubmit: () => {} });
-
-  // Initialize data on mount
+  // Initialize
   useEffect(() => {
     async function init() {
       await seedInitialData();
-      await refreshAllData();
+      await refreshData();
       const auth = sessionStorage.getItem('apple_clean_auth');
       if (auth === 'true') {
         setIsAdminLoggedIn(true);
@@ -178,7 +139,7 @@ export default function App() {
     init();
   }, []);
 
-  // Timer tick
+  // Timer Tick
   useEffect(() => {
     let interval: any = null;
     if (timerRunning && timerSeconds > 0) {
@@ -188,12 +149,12 @@ export default function App() {
     } else if (timerRunning && timerSeconds === 0) {
       setTimerRunning(false);
       if (timerMode === 'study') {
-        setStudySessionsCompleted((prev) => prev + 1);
-        showToast('Study session complete. Time for a five-minute break.');
+        setSessionsDone((s) => s + 1);
+        showToast('Study session complete! Take a 5-minute break.');
         setTimerMode('break');
         setTimerSeconds(5 * 60);
       } else {
-        showToast('Break complete. Ready for another focus session?');
+        showToast('Break finished! Ready for next session?');
         setTimerMode('study');
         setTimerSeconds(25 * 60);
       }
@@ -212,43 +173,16 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3800);
   };
 
-  const refreshAllData = async () => {
+  const refreshData = async () => {
     const res = await dbGetAll<AcademicResource>('resources');
     setResources(res);
-    const pending = await dbGetAll<PendingUpload>('pending_uploads');
-    setPendingUploads(pending);
-    const recycled = await dbGetAll<AcademicResource>('recycled_resources');
-    setRecycledResources(recycled);
     const tickets = await dbGetAll<ComplaintTicket>('suggestions');
-    setAllTickets(tickets);
-    const leaders = await dbGetAll<Leader>('leadership');
-    if (leaders.length > 0) setLeadership(leaders);
+    setAllTickets(tickets.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     const logs = await dbGetAll<AuditLog>('audit_logs');
-    logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setAuditLogs(logs);
+    setAuditLogs(logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
   };
 
-  // Filtered resources
-  const filteredResources = resources.filter((item) => {
-    if (sourceFilter === 'VERIFIED' && item.isStudentUpload) return false;
-    if (sourceFilter === 'STUDENT_UPLOADS' && !item.isStudentUpload) return false;
-
-    const matchesLevel = levelFilter === 'ALL' || item.level === levelFilter;
-    const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
-    const matchesChip = courseChipFilter === 'ALL' || item.code.toUpperCase().includes(courseChipFilter.toUpperCase());
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      item.code.toLowerCase().includes(q) ||
-      item.title.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q) ||
-      item.uploader.toLowerCase().includes(q);
-    return matchesLevel && matchesType && matchesChip && matchesSearch;
-  });
-
-  const recentStudentUploads = resources.filter((r) => r.isStudentUpload);
-
-  // Download generator
+  // Direct File Download
   const handleDownload = (item: AcademicResource) => {
     showToast(`Downloading ${item.code}...`);
     if (item.fileBlob) {
@@ -261,52 +195,34 @@ export default function App() {
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } else {
-      const syllabusContent = `DEPARTMENT OF BUSINESS ADMINISTRATION
+      const content = `DEPARTMENT OF BUSINESS ADMINISTRATION
 FACULTY OF MANAGEMENT SCIENCES
 ======================================================
 Course: ${item.code} - ${item.title}
 Level: ${item.level} · Category: ${item.type}
 Date: ${item.date} · Contributor: ${item.uploader}
-Google Drive Repository: ${item.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
+Google Drive Repository: ${GOOGLE_DRIVE_FOLDER_URL}
 ======================================================
 
-Course Summary:
+Course Syllabus & Notes:
 ${item.description}
 
-Core Topics & Frameworks:
-1. Henri Fayol's 14 Principles of Management:
-   - Division of Work: Specialization builds efficiency.
-   - Authority & Responsibility: Clear command with accountable outcomes.
-   - Discipline: Adherence to agreed organizational codes.
-   - Unity of Command: Each team member reports to one supervisor.
-   - Unity of Direction: A single coordinated plan for team goals.
-   - Subordination of Individual Interest: Organization comes first.
-   - Remuneration: Fair and equitable compensation.
-   - Centralization vs Decentralization: Balanced decision-making.
-   - Scalar Chain: Unbroken hierarchy from leadership to operations.
-   - Order: The right place for every resource and person.
-   - Equity: Kindness, fairness, and impartial justice.
-   - Stability of Personnel: Low turnover ensures consistency.
-   - Initiative: Encouraging constructive innovation.
-   - Esprit de Corps: Morale and cohesion as collective strength.
+Key Management Principles:
+- Division of Work & Specialization
+- Authority, Responsibility & Discipline
+- Unity of Command & Unity of Direction
+- Equity, Order & Stability of Personnel
+- 5.0 CGPA Formula: Total Quality Points ÷ Total Units
 
-2. Max Weber's Bureaucracy:
-   - Formal rules, jurisdictional authority, impersonality, and merit-based career structure.
-
-3. 5.0 CGPA Formula:
-   - Semester GPA = Total Quality Points ÷ Total Credit Units
-   - A=5.0 (70-100%), B=4.0 (60-69%), C=3.0 (50-59%), D=2.0 (45-49%), E=1.0 (40-44%), F=0.0 (0-39%).
-
-Cloud Backend:
-Access all slide archives, lecture notes, and past examination papers directly in Google Drive:
+Direct Google Drive Link:
 ${GOOGLE_DRIVE_FOLDER_URL}
 ======================================================`;
 
-      const blob = new Blob([syllabusContent], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${item.code}_Overview.txt`;
+      a.download = `${item.code}_CourseGuide.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -314,8 +230,8 @@ ${GOOGLE_DRIVE_FOLDER_URL}
     }
   };
 
-  // Student upload submit
-  const handleStudentUpload = async (e: React.FormEvent) => {
+  // Student Document Upload
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) {
       showToast('Please select a file to upload (up to 100MB).');
@@ -326,40 +242,20 @@ ${GOOGLE_DRIVE_FOLDER_URL}
     const ext = uploadFile.name.split('.').pop()?.toUpperCase() || 'PDF';
     const sizeStr = (uploadFile.size / (1024 * 1024)).toFixed(1) + ' MB';
     const courseCodeFormatted = uploadCourseCode.trim().toUpperCase();
-    const docTitleFormatted = uploadDocTitle.trim() || `${courseCodeFormatted} Material`;
+    const docTitleFormatted = uploadDocTitle.trim() || `${courseCodeFormatted} Resource`;
     const uploaderFormatted = uploadUploaderName.trim() || 'Student Contributor';
 
-    const newPending: PendingUpload = {
-      trackingId,
-      id: 'res-up-' + Date.now(),
+    const newResource: AcademicResource = {
+      id: 'res-' + Date.now(),
       code: courseCodeFormatted,
       title: docTitleFormatted,
-      courseTitle: uploadCourseTitle.trim() || courseCodeFormatted,
       level: uploadLevel,
       type: uploadCategory,
       format: ext,
       size: sizeStr,
       date: new Date().toISOString().split('T')[0],
       uploader: uploaderFormatted,
-      uploaderContact: uploadContact.trim(),
-      description: uploadDescription.trim() || 'Uploaded resource saved and synced with Google Drive.',
-      fileName: uploadFile.name,
-      fileBlob: uploadFile,
-      status: 'approved',
-      submittedAt: new Date().toISOString()
-    };
-
-    const newActiveResource: AcademicResource = {
-      id: 'res-student-' + Date.now(),
-      code: courseCodeFormatted,
-      title: docTitleFormatted,
-      level: uploadLevel,
-      type: uploadCategory,
-      format: ext,
-      size: sizeStr,
-      date: new Date().toISOString().split('T')[0],
-      uploader: `${uploaderFormatted} (Student)`,
-      description: uploadDescription.trim() || 'Student-contributed document saved and linked to Google Drive.',
+      description: uploadDescription.trim() || 'Uploaded document linked to Google Drive.',
       isDemo: false,
       driveUrl: GOOGLE_DRIVE_FOLDER_URL,
       trackingId: trackingId,
@@ -370,67 +266,21 @@ ${GOOGLE_DRIVE_FOLDER_URL}
     };
 
     try {
-      await dbPut('pending_uploads', newPending);
-      await dbPut('resources', newActiveResource);
-      await logAuditAction(
-        'Document Uploaded',
-        uploaderFormatted,
-        `Added ${courseCodeFormatted} (${docTitleFormatted}) · Synced with Drive [${trackingId}]`
-      );
-
+      await dbPut('resources', newResource);
+      await logAuditAction('Document Uploaded', uploaderFormatted, `Saved ${courseCodeFormatted} [${trackingId}]`);
       setUploadResultTrackingId(trackingId);
       setUploadFile(null);
       setUploadDocTitle('');
-      setUploadCourseTitle('');
       setUploadDescription('');
-      showToast('Document saved and published to the Resource Bank.');
-      await refreshAllData();
+      showToast('Document uploaded and added to the download bank.');
+      await refreshData();
     } catch (err) {
-      console.error('Upload error:', err);
-      showToast('Unable to complete upload. Please try again.');
+      console.error(err);
+      showToast('Upload error. Please try again.');
     }
   };
 
-  // Search submission tracking ID
-  const handleSearchTracking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = trackSearchId.trim().toUpperCase();
-    if (!query) return;
-
-    setTrackSearched(true);
-    const pendingList = await dbGetAll<PendingUpload>('pending_uploads');
-    const match = pendingList.find((p) => p.trackingId.toUpperCase() === query);
-
-    if (match) {
-      setTrackedUpload(match);
-    } else {
-      const allRes = await dbGetAll<AcademicResource>('resources');
-      const approved = allRes.find((r) => r.trackingId?.toUpperCase() === query);
-      if (approved) {
-        setTrackedUpload({
-          trackingId: approved.trackingId || query,
-          id: approved.id,
-          code: approved.code,
-          title: approved.title,
-          courseTitle: approved.code,
-          level: approved.level,
-          type: approved.type,
-          format: approved.format,
-          size: approved.size,
-          date: approved.date,
-          uploader: approved.uploader,
-          description: approved.description,
-          fileName: approved.title,
-          status: 'approved',
-          submittedAt: approved.date
-        });
-      } else {
-        setTrackedUpload(null);
-      }
-    }
-  };
-
-  // Comprehensive Offline AI Tutor Engine
+  // Offline AI Tutor Responses
   const handleSendAi = (customText?: string) => {
     const text = (customText || chatInput).trim();
     if (!text) return;
@@ -441,29 +291,26 @@ ${GOOGLE_DRIVE_FOLDER_URL}
 
     setTimeout(() => {
       const lower = text.toLowerCase();
-      let reply = "I am ready to help. You can find all course documents, syllabus guides, and past exams in our official Google Drive repository: " + GOOGLE_DRIVE_FOLDER_URL;
+      let reply = `Here to help! You can browse and download all verified materials in our Google Drive folder: ${GOOGLE_DRIVE_FOLDER_URL}`;
 
-      if (lower.includes('fayol') || lower.includes('14') || lower.includes('principles') || lower.includes('classical')) {
-        reply = `Henri Fayol's 14 Principles of Management (BUS 103 / BUS 201):
-
-1. Division of Work — Specialization improves output by making employees more efficient.
-2. Authority & Responsibility — Managers must be able to give orders, paired with accountability.
-3. Discipline — Adherence to established agreements and respect for organizational rules.
+      if (lower.includes('fayol') || lower.includes('14') || lower.includes('principles')) {
+        reply = `Henri Fayol's 14 Principles of Management:
+1. Division of Work — Specialization improves output and worker efficiency.
+2. Authority & Responsibility — Managers must give clear directives with accountability.
+3. Discipline — Adherence to established codes and mutual respect.
 4. Unity of Command — Every employee reports to only one direct supervisor.
-5. Unity of Direction — One leader and one coordinated plan for activities sharing the same objective.
-6. Subordination of Individual Interest — The interests of the organization take precedence over personal interests.
-7. Remuneration — Fair and equitable compensation for all team members.
-8. Centralization — Determining the ideal balance between centralized authority and departmental delegation.
-9. Scalar Chain — A clear hierarchy of line authority from top executive ranks down to the frontline.
-10. Order — The right person and material in the right place at the right time.
-11. Equity — Impartiality, kindness, and justice across all levels.
-12. Stability of Personnel — Retaining experienced team members to minimize the friction of high turnover.
-13. Initiative — Empowering personnel to originate and execute ideas.
-14. Esprit de Corps — Building team harmony and trust as a primary organizational strength.`;
-      } else if (lower.includes('cgpa') || lower.includes('gpa') || lower.includes('grade') || lower.includes('grading') || lower.includes('5.0')) {
-        reply = `5.00 CGPA Grading Scale & Degree Honours:
-
-Grade Scale:
+5. Unity of Direction — One plan and one leader for common objectives.
+6. Subordination of Individual Interest — The organizational mission comes first.
+7. Remuneration — Fair, equitable compensation for all staff.
+8. Centralization — Balanced decision-making between top leadership and branches.
+9. Scalar Chain — An unbroken hierarchy of line authority from top to bottom.
+10. Order — The right person and resource in the right place.
+11. Equity — Kindness, impartiality, and fairness for everyone.
+12. Stability of Personnel — Retaining experienced talent to minimize turnover friction.
+13. Initiative — Encouraging workers to originate and carry out ideas.
+14. Esprit de Corps — Building collective morale, team harmony, and unity.`;
+      } else if (lower.includes('cgpa') || lower.includes('gpa') || lower.includes('grade') || lower.includes('5.0')) {
+        reply = `5.00 CGPA Grading Scale:
 • 70% – 100% (A): 5.0 Points
 • 60% – 69% (B): 4.0 Points
 • 50% – 59% (C): 3.0 Points
@@ -471,86 +318,50 @@ Grade Scale:
 • 40% – 44% (E): 1.0 Point
 • 0% – 39% (F): 0.0 Points
 
-Honours Classification:
-• 4.50 – 5.00: First Class Honours (Distinction)
+Honours Classifications:
+• 4.50 – 5.00: First Class Honours
 • 3.50 – 4.49: Second Class Honours (Upper Division)
 • 2.40 – 3.49: Second Class Honours (Lower Division)
 • 1.50 – 2.39: Third Class Honours
 • 1.00 – 1.49: Pass Degree
 
-Formula: Semester GPA = Total Quality Points ÷ Total Registered Units.`;
+Formula: Semester GPA = Total Quality Points ÷ Total Units Registered.`;
       } else if (lower.includes('weber') || lower.includes('bureaucracy')) {
-        reply = `Max Weber's Bureaucracy:
-A rational-legal structure based on five foundational characteristics:
-1. Hierarchy of Authority — Lower offices report directly to higher offices in an unbroken line.
-2. Formal Rules & Regulations — Clear, documented operating procedures.
-3. Division of Labor — Clear areas of competence for each official.
-4. Impersonality — Decisions made based on documented standards without personal bias.
-5. Merit-based Career Structure — Recruitment and advancement based solely on technical qualification.`;
-      } else if (lower.includes('taylor') || lower.includes('scientific management')) {
-        reply = `Frederick Winslow Taylor's Scientific Management (1911):
-A systematic approach to operational efficiency:
-1. Science, Not Rule of Thumb — Replacing guesswork with empirical time and motion study.
-2. Scientific Selection & Training — Matching workers systematically to specific tasks.
-3. Management-Worker Cooperation — Aligning incentives to ensure operations follow scientific guidelines.
-4. Equal Division of Work — Management plans and designs; frontline teams execute with precision.`;
-      } else if (lower.includes('project') || lower.includes('chapter') || lower.includes('thesis') || lower.includes('research')) {
-        reply = `University Final Year Research Project Structure:
-
-• Chapter 1: Introduction
-  Background of the Study, Problem Statement, Objectives, Research Questions, Hypotheses, Significance, Scope, and Operational Definitions.
-
-• Chapter 2: Literature Review
-  Conceptual Review, Theoretical Framework, Empirical Review, and Synthesis of Knowledge Gaps.
-
-• Chapter 3: Research Methodology
-  Design, Population, Sample Size (Taro Yamane formula), Sampling Technique, Research Instrument, Validity & Reliability, and Data Analysis Method.
-
-• Chapter 4: Data Presentation & Analysis
-  Response rates, Demographic presentation, Hypotheses testing (Regression/ANOVA), and Interpretation of Findings.
-
-• Chapter 5: Summary, Conclusions & Recommendations
-  Summary of findings, Theoretical & Managerial Implications, Recommendations, and Areas for Further Study.`;
-      } else if (lower.includes('drive') || lower.includes('backend') || lower.includes('cloud') || lower.includes('folder')) {
+        reply = `Max Weber's Bureaucratic Model:
+A rational-legal organizational structure based on:
+1. Hierarchy of Authority — Explicit vertical line of command.
+2. Formal Rules and Regulations — Standard operating procedures and consistency.
+3. Division of Labor — Clear areas of specialized competence.
+4. Impersonality — Decisions made on documented standards, free of personal bias.
+5. Merit-based Careers — Employment and promotion based strictly on technical competence.`;
+      } else if (lower.includes('taylor') || lower.includes('scientific')) {
+        reply = `Frederick Winslow Taylor's Scientific Management:
+1. Science, Not Rule of Thumb — Time-and-motion empirical studies.
+2. Scientific Selection & Training — Matching workers systematically to suitable roles.
+3. Cooperation Over Individualism — Aligning workforce and management objectives.
+4. Equal Division of Responsibility — Management plans systematically; workers execute with precision.`;
+      } else if (lower.includes('project') || lower.includes('chapter') || lower.includes('thesis')) {
+        reply = `University Research Project Structure (Chapters 1–5):
+• Chapter 1: Introduction (Background, Problem Statement, Objectives, Hypotheses, Scope, Significance)
+• Chapter 2: Literature Review (Conceptual Framework, Theoretical Framework, Empirical Studies)
+• Chapter 3: Research Methodology (Design, Population, Sample Size via Taro Yamane, Sampling Technique, Instrument, Data Analysis)
+• Chapter 4: Data Presentation & Analysis (Demographics, Hypotheses Testing using Regression/ANOVA, Discussion)
+• Chapter 5: Summary, Conclusion & Recommendations (Managerial implications, Policy advice, Limitations)`;
+      } else if (lower.includes('drive') || lower.includes('download') || lower.includes('folder')) {
         reply = `Official Google Drive Repository:
-Access the complete departmental repository of past exam papers, lecture notes, and slide decks:
+Access and download complete lecture slides, past exams, and curriculum guides:
 ${GOOGLE_DRIVE_FOLDER_URL}
-Accessible across iOS, macOS, Android, and Windows with no account sign-in required.`;
-      } else if (lower.includes('100') || lower.includes('freshman')) {
-        reply = `100 Level Core Courses:
-• BUS 101: Introduction to Business I
-• BUS 102: Introduction to Business II
-• BUS 103: Principles of Management I
-• ACC 101 & 102: Principles of Accounting
-• ECO 101 & 102: Principles of Economics
-• GST 111 & 112: Communication in English
-• GST 113: Nigerian Peoples and Culture`;
-      } else if (lower.includes('200') || lower.includes('sophomore')) {
-        reply = `200 Level Core Courses:
-• BUS 201: Principles of Management II (Organizational Theory)
-• BUS 202: Basic Marketing
-• BUS 203: Business Mathematics & Decision Statistics
-• BUS 204: Elements of Commercial Law
-• ACC 201: Financial Accounting
-• ECO 201: Microeconomic Theory`;
-      } else if (lower.includes('300')) {
-        reply = `300 Level Core Courses:
-• BUS 301: Organizational Behaviour
-• BUS 303: Operations Research & Quantitative Techniques
-• BUS 305: Marketing Management & Strategy
-• BUS 307: Human Resource Management
-• FIN 301: Business Finance`;
-      } else if (lower.includes('400') || lower.includes('final year')) {
-        reply = `400 Level Core Courses:
-• BUS 401: Business Policy & Strategic Management I
-• BUS 402: Business Policy & Strategic Management II
-• BUS 403: International Business Strategy
-• BUS 405: Production & Operations Management
-• BUS 499: Final Year Research Project`;
+No login required. Works on mobile and desktop.`;
+      } else if (lower.includes('100') || lower.includes('200') || lower.includes('300') || lower.includes('400')) {
+        reply = `Business Administration Core Curriculum:
+• 100L: BUS 101/102 (Intro to Business), BUS 103 (Principles of Management I), ACC 101, ECO 101, GST 111
+• 200L: BUS 201 (Principles of Management II), BUS 202 (Marketing), BUS 203 (Business Maths & Stats), BUS 204 (Commercial Law)
+• 300L: BUS 301 (Organizational Behaviour), BUS 303 (Operations Research), BUS 305 (Marketing Strategy), BUS 307 (HRM)
+• 400L: BUS 401/402 (Business Policy & Strategic Management), BUS 403 (International Business), BUS 499 (Final Year Project)`;
       }
 
       setChatMessages((prev) => [...prev, { role: 'bot', text: reply, time: 'Just now' }]);
-    }, 280);
+    }, 250);
   };
 
   // CGPA Calculator Logic
@@ -576,7 +387,6 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
     });
 
     const currentGpa = currentUnits > 0 ? (currentPoints / currentUnits).toFixed(2) : '0.00';
-
     const pCgpa = parseFloat(prevCgpa);
     const pUnits = parseFloat(prevUnits);
 
@@ -588,74 +398,29 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
       cumulativeCgpa = (totalPoints / totalUnits).toFixed(2);
     }
 
-    const numericCgpa = parseFloat(cumulativeCgpa);
-    let honors = 'Pass Degree';
+    const num = parseFloat(cumulativeCgpa);
+    let honours = 'Pass Degree';
+    if (num >= 4.5) honours = 'First Class Honours (Distinction)';
+    else if (num >= 3.5) honours = 'Second Class Honours (Upper Division)';
+    else if (num >= 2.4) honours = 'Second Class Honours (Lower Division)';
+    else if (num >= 1.5) honours = 'Third Class Honours';
 
-    if (numericCgpa >= 4.5) {
-      honors = 'First Class Honours (Distinction)';
-    } else if (numericCgpa >= 3.5) {
-      honors = 'Second Class Honours (Upper Division)';
-    } else if (numericCgpa >= 2.4) {
-      honors = 'Second Class Honours (Lower Division)';
-    } else if (numericCgpa >= 1.5) {
-      honors = 'Third Class Honours';
-    }
-
-    return { currentGpa, cumulativeCgpa, currentUnits, currentPoints, honors };
+    return { currentGpa, cumulativeCgpa, honours, totalUnits: currentUnits };
   };
 
-  const cgpaStats = calculateCgpa();
-
-  // Research Topic Generator
-  const generateResearchTopics = () => {
-    const topicsMap: Record<string, string[]> = {
-      'General Management': [
-        "Strategic Planning and Operational Performance in Emerging Small and Medium Enterprises.",
-        "Organizational Culture as a Catalyst for Employee Commitment in Commercial Organizations.",
-        "Change Management Strategies and Enterprise Agility During Economic Realignments.",
-        "Leadership Paradigms and Productivity: A Study of High-Growth Establishments.",
-        "Corporate Governance Mechanisms and Value Creation in Developing Market Sectors."
-      ],
-      'Marketing & Consumer Behaviour': [
-        "Digital Influencer Marketing and Brand Equity Formation Among Young Demographics.",
-        "Customer Experience Architecture and Retention Dynamics in Digital Banking.",
-        "Sustainable Packaging Solutions and Modern Consumer Purchase Intentions.",
-        "Algorithmic Advertising Precision and Market Share Trajectory in Telecommunications.",
-        "Ethical Brand Positioning and Willingness to Pay Premium Price Points."
-      ],
-      'Human Resource Management': [
-        "Continuous Learning Initiatives and Employee Retention in Knowledge-Driven Firms.",
-        "Remote Work Flexibility and Organizational Performance Metrics.",
-        "Objective Performance Appraisals as Drivers of Autonomous Worker Motivation.",
-        "Holistic Talent Acquisition Practices in Modern Service Industries.",
-        "Equity-Based Reward Architectures and Workplace Morale."
-      ],
-      'Finance & Quantitative Business': [
-        "Dynamic Working Capital Management and Enterprise Profitability.",
-        "Fintech Adoption Velocity and Financial Inclusion Across Underserved Demographics.",
-        "Capital Structure Optimization and Equity Valuation in Commercial Banking.",
-        "Micro-Financing Facilities and the Scaling of Small Local Businesses.",
-        "Currency Exchange Exposure and Supply Chain Cost Inflation."
-      ]
-    };
-
-    setGeneratedTopics(topicsMap[projectArea] || topicsMap['General Management']);
-    showToast('Generated research topics for ' + projectArea);
-  };
-
-  // Submit Complaint / Suggestion
-  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+  // Suggestion Submission
+  const handleSuggestionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fbMatric.trim() || !fbSubject.trim() || !fbDetails.trim()) {
-      showToast('Please complete all required fields.');
+    if (!fbSubject.trim() || !fbDetails.trim()) {
+      showToast('Please provide a subject and details for your suggestion.');
       return;
     }
 
     const ticketId = 'ACAD-TIC-' + Math.floor(100000 + Math.random() * 900000);
     const newTicket: ComplaintTicket = {
       ticketId,
-      matricNumber: fbMatric.trim().toUpperCase(),
-      studentName: fbName.trim() || 'Anonymous Student',
+      matricNumber: fbIsAnonymous ? 'ANONYMOUS' : (fbMatric.trim().toUpperCase() || 'ANONYMOUS'),
+      studentName: fbIsAnonymous ? 'Anonymous Student' : (fbName.trim() || 'Department Student'),
       level: fbLevel,
       category: fbCategory,
       subject: fbSubject.trim(),
@@ -667,731 +432,553 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
 
     try {
       await dbPut('suggestions', newTicket);
-      await logAuditAction('Ticket Logged', newTicket.matricNumber, `Ticket ${ticketId} regarding ${newTicket.subject}`);
+      await logAuditAction('Suggestion Submitted', newTicket.matricNumber, `Ticket ${ticketId} (${newTicket.category})`);
       setSubmittedTicketId(ticketId);
       setFbSubject('');
       setFbDetails('');
-      showToast(`Ticket logged. Reference: ${ticketId}`);
-      await refreshAllData();
+      showToast(`Submitted successfully! Your ticket ID is ${ticketId}`);
+      await refreshData();
     } catch (err) {
-      console.error('Feedback submit error:', err);
-      showToast('Unable to submit ticket.');
+      console.error(err);
+      showToast('Failed to submit suggestion.');
     }
   };
 
-  // Track ticket
+  // Track Ticket
   const handleTrackTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = trackTicketInput.trim().toUpperCase();
     if (!query) return;
 
-    setTrackTicketSearched(true);
+    setTrackSearched(true);
     const tickets = await dbGetAll<ComplaintTicket>('suggestions');
     const match = tickets.find((t) => t.ticketId.toUpperCase() === query);
     setTrackedTicket(match || null);
   };
 
   // Admin Login
-  const handleAdminLoginSubmit = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pinSetting = await dbGet<any>('settings', 'adminPin');
-    const storedPin = pinSetting ? pinSetting.value : '2026';
+    const pinItem = await dbGet<any>('settings', 'adminPin');
+    const correctPin = pinItem ? pinItem.value : '2026';
 
-    if (adminPinInput.trim() === storedPin) {
+    if (adminPinInput.trim() === correctPin) {
       sessionStorage.setItem('apple_clean_auth', 'true');
       setIsAdminLoggedIn(true);
-      setIsAdminAuthModalOpen(false);
+      setAdminPinError(false);
       setAdminPinInput('');
-      setAdminAuthError(false);
-      showToast('Welcome, Administrator.');
+      showToast('Welcome to EXCOS Admin Space.');
       await logAuditAction('Admin Login', 'Officer', 'Session started');
-      await refreshAllData();
-      setActiveSection('admin');
+      await refreshData();
     } else {
-      setAdminAuthError(true);
+      setAdminPinError(true);
     }
   };
 
-  // Admin Logout
   const handleAdminLogout = () => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Sign Out',
-      message: 'Are you sure you want to end your administrative session?',
-      confirmText: 'Sign Out',
-      confirmColor: 'bg-[#1D1D1F] hover:bg-black',
-      onConfirm: async () => {
-        sessionStorage.removeItem('apple_clean_auth');
-        setIsAdminLoggedIn(false);
-        setActiveSection('resources');
-        showToast('Signed out.');
-        await logAuditAction('Admin Logout', 'Officer', 'Session ended');
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-      }
-    });
+    sessionStorage.removeItem('apple_clean_auth');
+    setIsAdminLoggedIn(false);
+    showToast('Signed out of Admin Space.');
   };
 
-  // Approve student upload
-  const approveStudentUpload = async (uploadItem: PendingUpload) => {
-    try {
-      const newResource: AcademicResource = {
-        id: 'res-' + Date.now(),
-        code: uploadItem.code,
-        title: uploadItem.title,
-        level: uploadItem.level,
-        type: uploadItem.type,
-        format: uploadItem.format,
-        size: uploadItem.size,
-        date: new Date().toISOString().split('T')[0],
-        uploader: uploadItem.uploader,
-        description: uploadItem.description,
-        isDemo: false,
-        driveUrl: GOOGLE_DRIVE_FOLDER_URL,
-        trackingId: uploadItem.trackingId,
-        fileName: uploadItem.fileName,
-        fileBlob: uploadItem.fileBlob,
-        isStudentUpload: true,
-        driveSynced: true
-      };
+  // Admin Reply to Suggestion
+  const handleSaveTicketReply = async () => {
+    if (!ticketReplyModal) return;
+    const updated: ComplaintTicket = {
+      ...ticketReplyModal,
+      status: replyStatus,
+      excosResponse: replyText.trim(),
+      resolvedAt: replyStatus === 'Resolved' ? new Date().toISOString().split('T')[0] : ticketReplyModal.resolvedAt
+    };
+    await dbPut('suggestions', updated);
+    await logAuditAction('Ticket Updated', 'Officer', `Replied to ${updated.ticketId} (${replyStatus})`);
+    showToast(`Updated ticket ${updated.ticketId}`);
+    setTicketReplyModal(null);
+    setReplyText('');
+    await refreshData();
+  };
 
-      await dbPut('resources', newResource);
-      await dbDelete('pending_uploads', uploadItem.trackingId);
-      await logAuditAction('Resource Verified', 'Officer', `Verified ${uploadItem.code} (${uploadItem.title})`);
-      showToast(`Verified ${uploadItem.code}.`);
-      await refreshAllData();
-    } catch (err) {
-      console.error('Approval error:', err);
-      showToast('Unable to approve resource.');
+  // Admin Delete Resource
+  const handleDeleteResource = async (id: string, code: string) => {
+    if (confirm(`Remove ${code} from the resource bank?`)) {
+      await dbDelete('resources', id);
+      await logAuditAction('Resource Removed', 'Officer', `Deleted ${code}`);
+      showToast(`Removed ${code}`);
+      await refreshData();
     }
   };
 
-  // Reject student upload
-  const rejectStudentUpload = (uploadItem: PendingUpload) => {
-    setPromptModal({
-      isOpen: true,
-      title: `Reject Submission (${uploadItem.trackingId})`,
-      label: 'Specify reason for the contributor:',
-      placeholder: 'Document did not meet syllabus or legibility guidelines...',
-      initialValue: '',
-      onSubmit: async (reason) => {
-        uploadItem.status = 'rejected';
-        uploadItem.rejectionReason = reason || 'Document did not meet syllabus guidelines.';
-        await dbPut('pending_uploads', uploadItem);
-        await logAuditAction('Material Rejected', 'Officer', `Rejected [${uploadItem.trackingId}]`);
-        showToast('Submission rejected.');
-        setPromptModal((prev) => ({ ...prev, isOpen: false }));
-        await refreshAllData();
-      }
-    });
-  };
-
-  // Soft delete resource to recycle bin
-  const softDeleteResource = (item: AcademicResource) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Move to Trash',
-      message: `Move "${item.code}: ${item.title}" to the trash? It can be restored later.`,
-      confirmText: 'Move to Trash',
-      confirmColor: 'bg-[#1D1D1F] hover:bg-black',
-      onConfirm: async () => {
-        await dbPut('recycled_resources', item);
-        await dbDelete('resources', item.id);
-        await logAuditAction('Resource Trashed', 'Officer', `Moved ${item.code} to trash`);
-        showToast(`Moved ${item.code} to trash.`);
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        await refreshAllData();
-      }
-    });
-  };
-
-  // Restore resource from recycle bin
-  const restoreRecycledResource = async (item: AcademicResource) => {
-    await dbPut('resources', item);
-    await dbDelete('recycled_resources', item.id);
-    await logAuditAction('Resource Restored', 'Officer', `Restored ${item.code}`);
-    showToast(`Restored ${item.code}.`);
-    await refreshAllData();
-  };
-
-  // Permanently delete resource
-  const permanentDeleteResource = (item: AcademicResource) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Permanently',
-      message: `Permanently delete "${item.code}: ${item.title}"? This cannot be undone.`,
-      confirmText: 'Delete',
-      confirmColor: 'bg-red-600 hover:bg-red-700',
-      onConfirm: async () => {
-        await dbDelete('recycled_resources', item.id);
-        await logAuditAction('Permanent Deletion', 'Officer', `Deleted ${item.code}`);
-        showToast(`Permanently deleted ${item.code}.`);
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        await refreshAllData();
-      }
-    });
-  };
-
-  // Empty recycle bin
-  const emptyRecycleBin = () => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Empty Trash',
-      message: 'Permanently remove all items in the trash? This action cannot be undone.',
-      confirmText: 'Empty Trash',
-      confirmColor: 'bg-red-600 hover:bg-red-700',
-      onConfirm: async () => {
-        for (const item of recycledResources) {
-          await dbDelete('recycled_resources', item.id);
-        }
-        await logAuditAction('Trash Emptied', 'Officer', 'Cleared all items');
-        showToast('Trash emptied.');
-        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        await refreshAllData();
-      }
-    });
-  };
-
-  // Respond to ticket modal
-  const handleRespondToTicket = (ticket: ComplaintTicket) => {
-    setPromptModal({
-      isOpen: true,
-      title: `Response to ${ticket.ticketId}`,
-      label: `Enter official response for ${ticket.matricNumber}:`,
-      placeholder: 'State the resolution or guidance...',
-      initialValue: ticket.excosResponse || '',
-      onSubmit: async (response) => {
-        ticket.excosResponse = response;
-        ticket.status = 'Resolved';
-        ticket.resolvedAt = new Date().toISOString().split('T')[0];
-        await dbPut('suggestions', ticket);
-        await logAuditAction('Ticket Resolved', 'Officer', `Responded to ${ticket.ticketId}`);
-        showToast('Response saved.');
-        setPromptModal((prev) => ({ ...prev, isOpen: false }));
-        await refreshAllData();
-      }
-    });
-  };
-
-  // Change Admin Pin
-  const [currentPinField, setCurrentPinField] = useState('');
-  const [newPinField, setNewPinField] = useState('');
-  const [confirmPinField, setConfirmPinField] = useState('');
-
-  const handleChangePin = async (e: React.FormEvent) => {
+  // Admin Change Passcode
+  const handleChangeAdminPin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pinSetting = await dbGet<any>('settings', 'adminPin');
-    const storedPin = pinSetting ? pinSetting.value : '2026';
-
-    if (currentPinField !== storedPin) {
-      showToast('Current passcode is incorrect.');
-      return;
-    }
-    if (!newPinField || newPinField !== confirmPinField) {
-      showToast('New passcodes do not match.');
-      return;
-    }
-    if (newPinField.length < 4) {
+    if (newAdminPin.trim().length < 4) {
       showToast('Passcode must be at least 4 digits.');
       return;
     }
-
-    await dbPut('settings', { key: 'adminPin', value: newPinField });
-    await logAuditAction('Passcode Changed', 'Officer', 'Passcode updated');
-    showToast('Passcode updated.');
-    setCurrentPinField('');
-    setNewPinField('');
-    setConfirmPinField('');
+    await dbPut('settings', { key: 'adminPin', value: newAdminPin.trim() });
+    await logAuditAction('Passcode Changed', 'Officer', 'Admin PIN updated');
+    showToast('Admin passcode updated successfully.');
+    setNewAdminPin('');
   };
 
-  // Export JSON Handover Package
-  const handleExportBackup = async () => {
-    const res = await dbGetAll('resources');
-    const pending = await dbGetAll('pending_uploads');
-    const recycled = await dbGetAll('recycled_resources');
-    const tickets = await dbGetAll('suggestions');
-    const leaders = await dbGetAll('leadership');
-    const logs = await dbGetAll('audit_logs');
-
-    const backupData = {
-      meta: {
-        department: 'Business Administration Academic Platform',
-        exportedAt: new Date().toISOString(),
-        driveBackend: GOOGLE_DRIVE_FOLDER_URL
-      },
-      resources: res,
-      pending_uploads: pending,
-      recycled_resources: recycled,
-      suggestions: tickets,
-      leadership: leaders,
-      audit_logs: logs
-    };
-
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Academic_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    showToast('Backup downloaded.');
-  };
-
-  // Report Resource Submission
-  const handleReportSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reportModalResource) return;
-
-    const reportItem = {
-      id: 'rep-' + Date.now(),
-      resourceId: reportModalResource.id,
-      resourceTitle: `${reportModalResource.code} - ${reportModalResource.title}`,
-      reason: reportReason,
-      notes: reportNotes,
-      date: new Date().toISOString().split('T')[0]
-    };
-
-    await dbPut('reports', reportItem);
-    await logAuditAction('Resource Reported', 'User', `Flagged ${reportModalResource.code} (${reportReason})`);
-    showToast('Report received. Thank you.');
-    setReportModalResource(null);
-    setReportNotes('');
-  };
+  // Filtered Resources
+  const filteredResources = resources.filter((item) => {
+    const matchesLevel = levelFilter === 'ALL' || item.level === levelFilter;
+    const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      item.code.toLowerCase().includes(q) ||
+      item.title.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q) ||
+      item.uploader.toLowerCase().includes(q);
+    return matchesLevel && matchesType && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] flex flex-col font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Inter',sans-serif]">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1D1D1F]/90 backdrop-blur-md text-white px-5 py-3 rounded-full shadow-lg flex items-center gap-2.5 animate-fade-in text-xs font-medium">
-          <Check className="w-3.5 h-3.5 text-[#0071E3] shrink-0" />
+          <Check className="w-4 h-4 text-[#0071E3] shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {confirmModal.isOpen && (
+      {/* Preview Modal */}
+      {previewResource && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-scale-up">
-            <h3 className="text-base font-semibold text-[#1D1D1F] mb-1.5">{confirmModal.title}</h3>
-            <p className="text-xs text-[#86868B] mb-6 leading-relaxed">{confirmModal.message}</p>
-            <div className="flex justify-center gap-2.5">
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full p-6 animate-scale-up">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-xs text-[#86868B]">
+                  {previewResource.code} · {previewResource.level} · {previewResource.type}
+                </span>
+                <h3 className="text-lg font-semibold text-[#1D1D1F] mt-1">
+                  {previewResource.title}
+                </h3>
+              </div>
               <button
-                type="button"
-                onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
-                className="px-5 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full transition cursor-pointer"
+                onClick={() => setPreviewResource(null)}
+                className="p-1 rounded-full text-[#86868B] hover:bg-black/5"
               >
-                Cancel
+                <X className="w-5 h-5" />
               </button>
-              <button
-                type="button"
-                onClick={confirmModal.onConfirm}
-                className={`px-5 py-2 text-xs font-medium text-white rounded-full transition cursor-pointer ${
-                  confirmModal.confirmColor || 'bg-[#0071E3] hover:bg-[#0077ED]'
-                }`}
+            </div>
+
+            <div className="my-5 p-4 bg-[#F5F5F7] rounded-2xl text-xs text-[#1D1D1F] leading-relaxed space-y-2">
+              <p className="font-medium text-[#1D1D1F]">Summary & Core Syllabus:</p>
+              <p className="text-[#86868B]">{previewResource.description}</p>
+              <div className="pt-2 text-[11px] text-[#86868B] border-t border-black/5">
+                Format: {previewResource.format} ({previewResource.size}) · Contributed by {previewResource.uploader}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <a
+                href={previewResource.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-xs font-medium text-[#0071E3] bg-[#0071E3]/10 hover:bg-[#0071E3]/20 rounded-full inline-flex items-center gap-1 transition"
               >
-                {confirmModal.confirmText || 'Confirm'}
+                <span>Open in Drive</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </a>
+              <button
+                onClick={() => {
+                  handleDownload(previewResource);
+                  setPreviewResource(null);
+                }}
+                className="px-5 py-2 text-xs font-medium text-white bg-[#0071E3] hover:bg-[#0077ED] rounded-full inline-flex items-center gap-1.5 transition"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Now</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Prompt Modal */}
-      {promptModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-scale-up">
-            <h3 className="text-base font-semibold text-[#1D1D1F] mb-1">{promptModal.title}</h3>
-            <label className="block text-xs text-[#86868B] mb-2 font-normal">
-              {promptModal.label}
-            </label>
-            <textarea
-              id="promptModalTextarea"
-              rows={3}
-              defaultValue={promptModal.initialValue || ''}
-              placeholder={promptModal.placeholder || 'Type here...'}
-              className="w-full px-3.5 py-2.5 text-xs bg-[#F5F5F7] border border-black/5 rounded-2xl focus:bg-white focus:ring-2 focus:ring-[#0071E3] outline-none mb-5"
-            />
-            <div className="flex justify-end gap-2">
+      {/* Student Upload Modal */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full p-6 sm:p-7 animate-scale-up my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-black/5">
+              <div>
+                <h3 className="text-base font-semibold text-[#1D1D1F]">Upload Academic Document</h3>
+                <p className="text-xs text-[#86868B] mt-0.5">Files are saved locally and synced with Google Drive.</p>
+              </div>
               <button
-                type="button"
-                onClick={() => setPromptModal((prev) => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
                 onClick={() => {
-                  const el = document.getElementById('promptModalTextarea') as HTMLTextAreaElement;
-                  promptModal.onSubmit(el ? el.value : '');
+                  setIsUploadModalOpen(false);
+                  setUploadResultTrackingId(null);
                 }}
-                className="px-5 py-2 text-xs font-medium text-white bg-[#0071E3] hover:bg-[#0077ED] rounded-full transition cursor-pointer"
+                className="p-1 text-[#86868B] hover:bg-black/5 rounded-full"
               >
-                Done
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            {uploadResultTrackingId ? (
+              <div className="my-6 p-5 bg-[#F5F5F7] rounded-2xl text-center space-y-3">
+                <CheckCircle className="w-8 h-8 text-[#0071E3] mx-auto" />
+                <h4 className="text-sm font-semibold text-[#1D1D1F]">Document Published!</h4>
+                <p className="text-xs text-[#86868B]">
+                  Your document is now available for download in the resource bank.
+                </p>
+                <div className="p-2.5 bg-white rounded-xl text-xs font-mono font-medium text-[#1D1D1F] border border-black/5">
+                  Tracking Code: {uploadResultTrackingId}
+                </div>
+                <div className="flex justify-center gap-2 pt-2">
+                  <a
+                    href={GOOGLE_DRIVE_FOLDER_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 text-xs font-medium text-[#0071E3] bg-[#0071E3]/10 rounded-full inline-flex items-center gap-1"
+                  >
+                    <span>View Drive Folder</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => {
+                      setIsUploadModalOpen(false);
+                      setUploadResultTrackingId(null);
+                    }}
+                    className="px-4 py-2 text-xs font-medium text-white bg-[#0071E3] rounded-full"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleUploadSubmit} className="space-y-4 pt-4">
+                {/* File picker */}
+                <div>
+                  <label className="block text-xs font-medium text-[#1D1D1F] mb-1.5">
+                    File Attachment (PDF, Word, PPT up to 100MB)
+                  </label>
+                  <div
+                    onClick={() => document.getElementById('studentFilePicker')?.click()}
+                    className={`border border-dashed rounded-2xl p-6 text-center cursor-pointer transition ${
+                      uploadFile ? 'border-[#0071E3] bg-[#0071E3]/5' : 'border-black/15 bg-[#F5F5F7] hover:border-black/30'
+                    }`}
+                  >
+                    <input
+                      id="studentFilePicker"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setUploadFile(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    {uploadFile ? (
+                      <div className="text-xs">
+                        <p className="font-semibold text-[#1D1D1F]">{uploadFile.name}</p>
+                        <p className="text-[#86868B] mt-0.5">
+                          {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB · Ready
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[#86868B]">
+                        <Upload className="w-6 h-6 text-[#86868B] mx-auto mb-1.5 opacity-60" />
+                        <span className="font-medium text-[#1D1D1F]">Tap to select a document</span> or drag & drop
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#86868B] mb-1">Level</label>
+                    <select
+                      value={uploadLevel}
+                      onChange={(e) => setUploadLevel(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
+                    >
+                      <option value="100 Level">100 Level</option>
+                      <option value="200 Level">200 Level</option>
+                      <option value="300 Level">300 Level</option>
+                      <option value="400 Level">400 Level</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#86868B] mb-1">Category</label>
+                    <select
+                      value={uploadCategory}
+                      onChange={(e) => setUploadCategory(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
+                    >
+                      <option value="Lecture Note">Lecture Note</option>
+                      <option value="Past Question">Past Examination Question</option>
+                      <option value="Textbook">Textbook</option>
+                      <option value="Assignment">Assignment Solution</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#86868B] mb-1">Course Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. BUS 201"
+                      value={uploadCourseCode}
+                      onChange={(e) => setUploadCourseCode(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl uppercase font-medium outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#86868B] mb-1">Your Name</label>
+                    <input
+                      type="text"
+                      placeholder="Student name"
+                      value={uploadUploaderName}
+                      onChange={(e) => setUploadUploaderName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#86868B] mb-1">Document Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 2024 First Semester Examination Past Questions"
+                    value={uploadDocTitle}
+                    onChange={(e) => setUploadDocTitle(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#86868B] mb-1">Short Description (Optional)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Brief note on topics or questions covered..."
+                    value={uploadDescription}
+                    onChange={(e) => setUploadDescription(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadModalOpen(false)}
+                    className="px-4 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 text-xs font-medium text-white bg-[#0071E3] hover:bg-[#0077ED] rounded-full inline-flex items-center gap-1"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload & Publish</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
 
       {/* Apple-style Top Bar */}
-      <nav className="sticky top-0 z-40 apple-glass border-b border-black/5">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-13">
-            {/* Logo */}
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14">
+            {/* Branding */}
             <div
-              onClick={() => setActiveSection('resources')}
+              onClick={() => setActiveTab('drive')}
               className="flex items-center gap-2 cursor-pointer group"
             >
-              <span className="font-semibold text-sm tracking-tight text-[#1D1D1F]">
-                Business Administration
-              </span>
-              <span className="text-xs text-[#86868B] hidden sm:inline">
-                Academic Hub
-              </span>
+              <div className="w-7 h-7 rounded-xl bg-[#0071E3] flex items-center justify-center text-white shadow-xs">
+                <Folder className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm tracking-tight text-[#1D1D1F]">
+                  Business Administration
+                </span>
+                <span className="text-[10px] text-[#86868B] -mt-0.5">
+                  Academic Portal · UNIMAID
+                </span>
+              </div>
             </div>
 
-            {/* Desktop Navigation Links (Clean Text with subtle hovers, NO pills) */}
-            <div className="hidden md:flex items-center gap-6 text-xs font-normal">
+            {/* Apple Segmented Navigation (The 4 Core Pillars) */}
+            <div className="bg-[#E8E8ED] p-1 rounded-full flex items-center text-xs">
               <button
-                onClick={() => setActiveSection('resources')}
-                className={`transition-colors cursor-pointer ${
-                  activeSection === 'resources' ? 'text-[#0071E3] font-medium' : 'text-[#1D1D1F] hover:text-[#0071E3]'
+                onClick={() => setActiveTab('drive')}
+                className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                  activeTab === 'drive'
+                    ? 'bg-white text-[#1D1D1F] shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
                 }`}
               >
-                Resources
+                Drive Files
               </button>
 
               <button
-                onClick={() => setActiveSection('upload')}
-                className={`transition-colors cursor-pointer ${
-                  activeSection === 'upload' ? 'text-[#0071E3] font-medium' : 'text-[#1D1D1F] hover:text-[#0071E3]'
+                onClick={() => setActiveTab('assistant')}
+                className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                  activeTab === 'assistant'
+                    ? 'bg-white text-[#1D1D1F] shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
                 }`}
               >
-                Upload
+                AI Assistant
               </button>
 
               <button
-                onClick={() => setActiveSection('assistant')}
-                className={`transition-colors cursor-pointer ${
-                  activeSection === 'assistant' ? 'text-[#0071E3] font-medium' : 'text-[#1D1D1F] hover:text-[#0071E3]'
+                onClick={() => setActiveTab('suggestions')}
+                className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                  activeTab === 'suggestions'
+                    ? 'bg-white text-[#1D1D1F] shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
                 }`}
               >
-                Assistant & Tools
+                Suggestions
               </button>
 
               <button
-                onClick={() => setActiveSection('suggestions')}
-                className={`transition-colors cursor-pointer ${
-                  activeSection === 'suggestions' ? 'text-[#0071E3] font-medium' : 'text-[#1D1D1F] hover:text-[#0071E3]'
+                onClick={() => setActiveTab('admin')}
+                className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                  activeTab === 'admin'
+                    ? 'bg-white text-[#0071E3] shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
                 }`}
-              >
-                Feedback
-              </button>
-
-              <button
-                onClick={() => setActiveSection('leadership')}
-                className={`transition-colors cursor-pointer ${
-                  activeSection === 'leadership' ? 'text-[#0071E3] font-medium' : 'text-[#1D1D1F] hover:text-[#0071E3]'
-                }`}
-              >
-                Directory
-              </button>
-
-              <a
-                href={GOOGLE_DRIVE_FOLDER_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#0071E3] hover:opacity-80 transition inline-flex items-center gap-1 font-medium"
-              >
-                <span>Google Drive</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </a>
-
-              <button
-                onClick={() => {
-                  if (isAdminLoggedIn) {
-                    setActiveSection('admin');
-                  } else {
-                    setIsAdminAuthModalOpen(true);
-                  }
-                }}
-                className="text-xs text-[#86868B] hover:text-[#1D1D1F] transition cursor-pointer"
               >
                 {isAdminLoggedIn ? 'Console' : 'Admin'}
               </button>
             </div>
-
-            {/* Mobile Menu Toggle */}
-            <div className="md:hidden flex items-center gap-3">
-              <a
-                href={GOOGLE_DRIVE_FOLDER_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[#0071E3] font-medium inline-flex items-center gap-0.5"
-              >
-                <span>Drive</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </a>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-1.5 text-[#1D1D1F] hover:bg-black/5 rounded-full"
-                aria-label="Navigation"
-              >
-                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              </button>
-            </div>
           </div>
         </div>
-
-        {/* Mobile Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 px-6 py-4 space-y-3 text-sm">
-            <button
-              onClick={() => {
-                setActiveSection('resources');
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#1D1D1F]"
-            >
-              Resources
-            </button>
-            <button
-              onClick={() => {
-                setActiveSection('upload');
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#1D1D1F]"
-            >
-              Upload Material
-            </button>
-            <button
-              onClick={() => {
-                setActiveSection('assistant');
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#1D1D1F]"
-            >
-              Assistant & Tools
-            </button>
-            <button
-              onClick={() => {
-                setActiveSection('suggestions');
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#1D1D1F]"
-            >
-              Feedback & Grievances
-            </button>
-            <button
-              onClick={() => {
-                setActiveSection('leadership');
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#1D1D1F]"
-            >
-              Directory
-            </button>
-            <button
-              onClick={() => {
-                if (isAdminLoggedIn) {
-                  setActiveSection('admin');
-                } else {
-                  setIsAdminAuthModalOpen(true);
-                }
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left py-1 text-[#86868B]"
-            >
-              Administrative Portal
-            </button>
-          </div>
-        )}
       </nav>
 
-      {/* Hero Section — Apple-style typography, generous whitespace, confident simplicity */}
-      <section className="pt-16 pb-14 px-4 sm:px-6 text-center max-w-4xl mx-auto">
-        <span className="text-xs font-semibold text-[#86868B] tracking-wide uppercase">
-          Department of Business Administration
-        </span>
-
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-semibold tracking-[-0.03em] text-[#1D1D1F] leading-[1.08] mt-3">
-          Academic Resources.
-          <span className="block text-[#86868B] font-normal mt-1">Brilliantly organized.</span>
-        </h1>
-
-        <p className="text-base sm:text-lg text-[#86868B] max-w-xl mx-auto mt-4 font-normal leading-relaxed">
-          Course handouts, past examination series, and verified student notes. Built for Business Administration, connected to Google Drive.
-        </p>
-
-        {/* Apple-style Pill CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-          <a
-            href={GOOGLE_DRIVE_FOLDER_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="apple-button-primary px-6 py-2.5 text-xs sm:text-sm font-medium inline-flex items-center gap-1.5 shadow-xs"
-          >
-            <span>Open Google Drive</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
-
-          <button
-            onClick={() => setActiveSection('resources')}
-            className="apple-button-secondary px-6 py-2.5 text-xs sm:text-sm font-medium cursor-pointer"
-          >
-            Browse Materials
-          </button>
-
-          <button
-            onClick={() => setActiveSection('upload')}
-            className="text-xs sm:text-sm font-medium text-[#0071E3] hover:underline px-3 py-2 cursor-pointer inline-flex items-center gap-1"
-          >
-            <span>Upload Notes</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Minimal Metric Separation */}
-        <div className="flex items-center justify-center gap-6 mt-12 text-xs text-[#86868B]">
-          <span>100L – 400L Curriculum</span>
-          <span aria-hidden="true">·</span>
-          <span>Google Drive Backend</span>
-          <span aria-hidden="true">·</span>
-          <span>100MB File Support</span>
-          <span aria-hidden="true">·</span>
-          <span>Offline AI Tutor</span>
-        </div>
-      </section>
-
-      {/* Main Content Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 pb-20">
-        {/* SECTION 1: ACADEMIC RESOURCE BANK */}
-        {activeSection === 'resources' && (
-          <div className="space-y-8">
-            {/* Filter Bar (Apple-style Segmented Controls) */}
-            <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold tracking-tight text-[#1D1D1F]">
-                    Resource Bank
-                  </h2>
-                  <p className="text-xs text-[#86868B] mt-0.5">
-                    Curriculum syllabi, examination papers, and lecture summaries.
-                  </p>
-                </div>
-
-                {/* Collection Segmented Control */}
-                <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex self-start sm:self-auto text-xs">
-                  <button
-                    onClick={() => setSourceFilter('ALL')}
-                    className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
-                      sourceFilter === 'ALL' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                    }`}
-                  >
-                    All ({resources.length})
-                  </button>
-                  <button
-                    onClick={() => setSourceFilter('VERIFIED')}
-                    className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
-                      sourceFilter === 'VERIFIED' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                    }`}
-                  >
-                    Curriculum ({resources.filter((r) => !r.isStudentUpload).length})
-                  </button>
-                  <button
-                    onClick={() => setSourceFilter('STUDENT_UPLOADS')}
-                    className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
-                      sourceFilter === 'STUDENT_UPLOADS' ? 'bg-white text-[#0071E3] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                    }`}
-                  >
-                    Drive Uploads ({resources.filter((r) => r.isStudentUpload).length})
-                  </button>
+      {/* Main Container */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
+        {/* ========================================================
+            PILLAR 1: GOOGLE DRIVE & STUDENT DOWNLOAD BANK
+            ======================================================== */}
+        {activeTab === 'drive' && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Prominent Official Google Drive Banner Card */}
+            <div className="bg-gradient-to-br from-white to-[#F0F4FA] p-6 sm:p-8 rounded-3xl border border-black/5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="space-y-1.5 max-w-lg">
+                <span className="text-[11px] font-semibold tracking-wide text-[#0071E3] uppercase">
+                  Cloud Backend Repository
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#1D1D1F]">
+                  Department Google Drive
+                </h1>
+                <p className="text-xs sm:text-sm text-[#86868B] leading-relaxed">
+                  Access the official departmental Google Drive folder for past exam papers, lecture slides, assignments, and curriculum syllabi across 100L to 400L.
+                </p>
+                <div className="pt-2 text-xs text-[#86868B] flex items-center gap-2">
+                  <span>Folder ID: <code className="font-mono text-[#1D1D1F]">{GOOGLE_DRIVE_FOLDER_ID}</code></span>
+                  <span>·</span>
+                  <span className="text-emerald-600 font-medium">Always Synced</span>
                 </div>
               </div>
 
-              {/* Academic Level & Search Controls */}
-              <div className="space-y-3 pt-1">
-                {/* Level Tabs */}
-                <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto shrink-0">
+                <a
+                  href={GOOGLE_DRIVE_FOLDER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-xs transition"
+                >
+                  <span>Open Drive Folder</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </a>
+
+                <button
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="px-4 py-2.5 rounded-full bg-white hover:bg-[#F5F5F7] border border-black/10 text-xs font-medium text-[#1D1D1F] inline-flex items-center justify-center gap-1.5 transition"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#0071E3]" />
+                  <span>Upload Document</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Controls (Apple Segmented Bar) */}
+            <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-[#1D1D1F]">
+                    Course Materials Bank
+                  </h2>
+                  <span className="text-xs text-[#86868B]">
+                    ({filteredResources.length} items available)
+                  </span>
+                </div>
+
+                {/* Level Selector */}
+                <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs self-start sm:self-auto">
                   {['ALL', '100 Level', '200 Level', '300 Level', '400 Level'].map((lvl) => (
                     <button
                       key={lvl}
                       onClick={() => setLevelFilter(lvl)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                      className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
                         levelFilter === lvl
-                          ? 'bg-[#1D1D1F] text-white'
-                          : 'bg-[#F5F5F7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#E8E8ED]'
+                          ? 'bg-white text-[#1D1D1F] shadow-xs'
+                          : 'text-[#86868B] hover:text-[#1D1D1F]'
                       }`}
                     >
-                      {lvl === 'ALL' ? 'All Levels' : lvl}
+                      {lvl === 'ALL' ? 'All' : lvl.replace(' Level', 'L')}
                     </button>
                   ))}
                 </div>
+              </div>
 
-                {/* Course Codes Inline */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-2">
-                  <span className="text-xs text-[#86868B] mr-1">Courses:</span>
-                  {['ALL', 'BUS 101', 'BUS 103', 'BUS 201', 'BUS 203', 'BUS 301', 'BUS 305', 'BUS 401', 'BUS 403'].map((code) => (
-                    <button
-                      key={code}
-                      onClick={() => setCourseChipFilter(code)}
-                      className={`px-2.5 py-1 rounded-lg text-xs transition cursor-pointer ${
-                        courseChipFilter === code
-                          ? 'bg-[#0071E3] text-white font-medium'
-                          : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-black/5'
-                      }`}
-                    >
-                      {code}
-                    </button>
-                  ))}
+              {/* Search & Category Filter */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="sm:col-span-2 relative">
+                  <Search className="w-3.5 h-3.5 text-[#86868B] absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    placeholder="Search by course code, title, or topic (e.g. BUS 201)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                  />
                 </div>
 
-                {/* Search Bar & Category Dropdown */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                  <div className="sm:col-span-2 relative">
-                    <Search className="w-3.5 h-3.5 text-[#86868B] absolute left-3.5 top-3" />
-                    <input
-                      type="text"
-                      placeholder="Search courses, titles, or topics..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2 text-xs bg-[#F5F5F7] rounded-xl focus:bg-white focus:ring-1 focus:ring-[#0071E3] outline-none"
-                    />
-                  </div>
-                  <div>
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl text-[#1D1D1F] font-normal outline-none cursor-pointer"
-                    >
-                      <option value="ALL">All Categories</option>
-                      <option value="Past Question">Past Examination Question</option>
-                      <option value="Lecture Note">Lecture Note</option>
-                      <option value="Textbook">Textbook</option>
-                      <option value="Assignment">Assignment</option>
-                    </select>
-                  </div>
+                <div>
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl text-[#1D1D1F] outline-none cursor-pointer"
+                  >
+                    <option value="ALL">All Categories</option>
+                    <option value="Past Question">Past Examination Question</option>
+                    <option value="Lecture Note">Lecture Note</option>
+                    <option value="Textbook">Textbook</option>
+                    <option value="Assignment">Assignment</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Resources List / Cards — Clean unboxed metadata, crisp titles */}
+            {/* Resources Grid */}
             {filteredResources.length === 0 ? (
               <div className="bg-white rounded-3xl p-12 text-center border border-black/5">
-                <p className="text-sm text-[#86868B]">No matching academic materials found.</p>
+                <p className="text-sm text-[#86868B]">No documents found matching your filter.</p>
                 <button
                   onClick={() => {
                     setLevelFilter('ALL');
                     setTypeFilter('ALL');
-                    setCourseChipFilter('ALL');
-                    setSourceFilter('ALL');
                     setSearchQuery('');
                   }}
-                  className="mt-3 text-xs text-[#0071E3] hover:underline cursor-pointer font-medium"
+                  className="mt-2 text-xs text-[#0071E3] font-medium hover:underline"
                 >
-                  Reset all filters
+                  Reset filters
                 </button>
               </div>
             ) : (
@@ -1399,82 +986,68 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                 {filteredResources.map((item) => (
                   <div
                     key={item.id}
-                    className="apple-card p-6 flex flex-col justify-between"
+                    className="bg-white p-5 rounded-3xl border border-black/5 hover:border-black/15 shadow-xs transition flex flex-col justify-between"
                   >
                     <div>
-                      {/* Quiet unboxed metadata line (NO static pills) */}
+                      {/* Quiet metadata line */}
                       <div className="flex items-center gap-2 text-xs text-[#86868B]">
                         <span className="font-semibold text-[#1D1D1F]">{item.code}</span>
-                        <span aria-hidden="true">·</span>
+                        <span>·</span>
                         <span>{item.level}</span>
-                        <span aria-hidden="true">·</span>
+                        <span>·</span>
                         <span>{item.type}</span>
                         {item.isStudentUpload && (
                           <>
-                            <span aria-hidden="true">·</span>
+                            <span>·</span>
                             <span className="text-[#0071E3] font-medium">Drive Synced</span>
                           </>
                         )}
                       </div>
 
-                      {/* Title */}
-                      <h3 className="font-semibold text-base text-[#1D1D1F] mt-2 tracking-tight leading-snug">
+                      <h3 className="font-semibold text-sm text-[#1D1D1F] mt-2 leading-snug">
                         {item.title}
                       </h3>
 
-                      {/* Description */}
-                      <p className="text-xs text-[#86868B] mt-2 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-[#86868B] mt-1.5 line-clamp-2 leading-relaxed">
                         {item.description}
                       </p>
 
-                      {/* Contributor */}
-                      <div className="text-[11px] text-[#A1A1A6] mt-3">
-                        By {item.uploader} · {item.date}
+                      <div className="text-[11px] text-[#A1A1A6] mt-2.5">
+                        Uploaded by {item.uploader} · {item.date}
                       </div>
                     </div>
 
-                    {/* Card Actions */}
-                    <div className="pt-4 mt-5 border-t border-black/5 flex items-center justify-between text-xs">
+                    {/* Actions */}
+                    <div className="pt-3.5 mt-4 border-t border-black/5 flex items-center justify-between text-xs">
                       <span className="text-[#86868B]">
                         {item.format} ({item.size})
                       </span>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <button
-                          type="button"
                           onClick={() => setPreviewResource(item)}
-                          className="text-[#86868B] hover:text-[#1D1D1F] transition cursor-pointer"
+                          className="px-2.5 py-1 text-[#86868B] hover:text-[#1D1D1F] transition cursor-pointer"
                         >
                           Preview
                         </button>
 
                         <button
-                          type="button"
                           onClick={() => handleDownload(item)}
-                          className="text-[#0071E3] font-medium hover:underline transition cursor-pointer"
+                          className="px-3 py-1 bg-[#0071E3]/10 hover:bg-[#0071E3]/20 text-[#0071E3] font-medium rounded-full inline-flex items-center gap-1 transition cursor-pointer"
                         >
-                          Download
+                          <Download className="w-3 h-3" />
+                          <span>Download</span>
                         </button>
 
                         <a
                           href={item.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#86868B] hover:text-[#0071E3] transition inline-flex items-center gap-0.5"
+                          className="p-1 text-[#86868B] hover:text-[#0071E3] transition"
                           title="Open in Drive"
                         >
-                          <span>Drive</span>
-                          <ArrowUpRight className="w-3 h-3" />
+                          <ArrowUpRight className="w-3.5 h-3.5" />
                         </a>
-
-                        <button
-                          type="button"
-                          onClick={() => setReportModalResource(item)}
-                          className="text-[#A1A1A6] hover:text-red-600 transition cursor-pointer"
-                          title="Report item"
-                        >
-                          <Flag className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -1484,716 +1057,386 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
           </div>
         )}
 
-        {/* SECTION 2: STUDENT RESOURCE UPLOAD SYSTEM (100MB) */}
-        {activeSection === 'upload' && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight text-[#1D1D1F]">
-                Upload Course Material
-              </h2>
-              <p className="text-sm text-[#86868B] mt-1.5">
-                Saved and linked directly with the departmental Google Drive repository.
-              </p>
-
-              {/* Segmented control for Upload views */}
-              <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs mt-5">
-                <button
-                  onClick={() => setUploadTab('submit')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    uploadTab === 'submit' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                  }`}
-                >
-                  Submit Document
-                </button>
-                <button
-                  onClick={() => setUploadTab('live_uploads')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    uploadTab === 'live_uploads' ? 'bg-white text-[#0071E3] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                  }`}
-                >
-                  Recent Uploads ({recentStudentUploads.length})
-                </button>
-                <button
-                  onClick={() => setUploadTab('track')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    uploadTab === 'track' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                  }`}
-                >
-                  Track Code
-                </button>
+        {/* ========================================================
+            PILLAR 2: OFFLINE AI ASSISTANT & ACADEMIC TOOLKIT
+            ======================================================== */}
+        {activeTab === 'assistant' && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Header & Sub-tabs */}
+            <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#0071E3]" />
+                  <h1 className="text-lg font-semibold text-[#1D1D1F]">
+                    Academic AI Assistant & Toolkit
+                  </h1>
+                </div>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  100% offline knowledge engine for Business Administration theories, project guide, and CGPA tools.
+                </p>
               </div>
-            </div>
 
-            {uploadTab === 'submit' && (
-              <div className="bg-white p-7 sm:p-9 rounded-3xl border border-black/5 shadow-xs space-y-6">
-                {uploadResultTrackingId && (
-                  <div className="bg-[#F5F5F7] p-5 rounded-2xl text-xs space-y-2.5">
-                    <div className="font-semibold text-[#1D1D1F] flex items-center gap-1.5">
-                      <Check className="w-4 h-4 text-[#0071E3]" />
-                      <span>Document published to the Resource Bank</span>
-                    </div>
-                    <p className="text-[#86868B] leading-relaxed">
-                      Your document is live for fellow students. Tracking code: <strong className="font-mono text-[#1D1D1F]">{uploadResultTrackingId}</strong>
-                    </p>
-                    <div className="flex gap-3 pt-1">
-                      <a
-                        href={GOOGLE_DRIVE_FOLDER_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#0071E3] font-medium hover:underline inline-flex items-center gap-1"
-                      >
-                        <span>Open Drive Folder</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          setSourceFilter('STUDENT_UPLOADS');
-                          setActiveSection('resources');
-                        }}
-                        className="text-[#86868B] hover:text-[#1D1D1F] transition cursor-pointer"
-                      >
-                        View in Resource Bank
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleStudentUpload} className="space-y-5">
-                  {/* Dropzone */}
-                  <div>
-                    <label className="block text-xs font-medium text-[#1D1D1F] mb-1.5">
-                      File (PDF, Word, PowerPoint, Excel up to 100MB)
-                    </label>
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          setUploadFile(e.dataTransfer.files[0]);
-                        }
-                      }}
-                      onClick={() => document.getElementById('fileUploadInput')?.click()}
-                      className={`border border-dashed rounded-2xl p-8 text-center cursor-pointer transition ${
-                        uploadFile ? 'border-[#0071E3] bg-[#0071E3]/5' : 'border-black/10 hover:border-black/25 bg-[#F5F5F7]'
-                      }`}
-                    >
-                      <input
-                        id="fileUploadInput"
-                        type="file"
-                        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            setUploadFile(e.target.files[0]);
-                          }
-                        }}
-                        className="hidden"
-                      />
-                      {uploadFile ? (
-                        <div className="text-xs">
-                          <p className="font-semibold text-[#1D1D1F]">{uploadFile.name}</p>
-                          <p className="text-[#86868B] mt-0.5">
-                            {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB · Ready to upload
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="text-xs text-[#86868B]">
-                          <Upload className="w-6 h-6 text-[#86868B] mx-auto mb-2 opacity-60" />
-                          <span className="font-medium text-[#1D1D1F]">Choose a file</span> or drag and drop here
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Form fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Academic Level</label>
-                      <select
-                        value={uploadLevel}
-                        onChange={(e) => setUploadLevel(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl text-[#1D1D1F] outline-none"
-                      >
-                        <option value="100 Level">100 Level</option>
-                        <option value="200 Level">200 Level</option>
-                        <option value="300 Level">300 Level</option>
-                        <option value="400 Level">400 Level</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Category</label>
-                      <select
-                        value={uploadCategory}
-                        onChange={(e) => setUploadCategory(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl text-[#1D1D1F] outline-none"
-                      >
-                        <option value="Lecture Note">Lecture Note</option>
-                        <option value="Past Question">Past Examination Question</option>
-                        <option value="Textbook">Textbook</option>
-                        <option value="Assignment">Assignment Solution</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Course Code</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. BUS 201"
-                        value={uploadCourseCode}
-                        onChange={(e) => setUploadCourseCode(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl uppercase font-medium outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Course Title</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Principles of Management II"
-                        value={uploadCourseTitle}
-                        onChange={(e) => setUploadCourseTitle(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-[#86868B] mb-1">Document Title</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Henri Fayol 14 Principles Lecture Summary"
-                      value={uploadDocTitle}
-                      onChange={(e) => setUploadDocTitle(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs text-[#86868B] mb-1">Summary (Optional)</label>
-                    <textarea
-                      rows={2}
-                      placeholder="Brief note on chapters or exam years included..."
-                      value={uploadDescription}
-                      onChange={(e) => setUploadDescription(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Your Name</label>
-                      <input
-                        type="text"
-                        placeholder="Student name"
-                        value={uploadUploaderName}
-                        onChange={(e) => setUploadUploaderName(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Contact (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="Phone or email"
-                        value={uploadContact}
-                        onChange={(e) => setUploadContact(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full apple-button-primary py-2.5 text-xs font-medium cursor-pointer"
-                  >
-                    Upload Document
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* TAB: RECENT UPLOADS */}
-            {uploadTab === 'live_uploads' && (
-              <div className="bg-white p-7 rounded-3xl border border-black/5 shadow-xs space-y-4">
-                <h3 className="text-sm font-semibold text-[#1D1D1F]">
-                  Student Documents Synced with Google Drive
-                </h3>
-                {recentStudentUploads.length === 0 ? (
-                  <p className="text-xs text-[#86868B] py-6 text-center">No student uploads yet.</p>
-                ) : (
-                  <div className="divide-y divide-black/5">
-                    {recentStudentUploads.map((up) => (
-                      <div key={up.id} className="py-3.5 flex items-center justify-between text-xs">
-                        <div>
-                          <div className="font-semibold text-[#1D1D1F]">
-                            {up.code} · {up.title}
-                          </div>
-                          <div className="text-[11px] text-[#86868B] mt-0.5">
-                            {up.level} · {up.size} · Uploaded by {up.uploader}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(up)}
-                            className="text-[#0071E3] hover:underline font-medium cursor-pointer"
-                          >
-                            Download
-                          </button>
-                          <a
-                            href={GOOGLE_DRIVE_FOLDER_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#86868B] hover:text-[#1D1D1F] inline-flex items-center gap-0.5"
-                          >
-                            <span>Drive</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB: TRACK SUBMISSION */}
-            {uploadTab === 'track' && (
-              <div className="bg-white p-7 rounded-3xl border border-black/5 shadow-xs space-y-4">
-                <h3 className="text-sm font-semibold text-[#1D1D1F]">Track Submission Status</h3>
-                <form onSubmit={handleSearchTracking} className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter code (e.g. ACAD-SUB-123456)"
-                    value={trackSearchId}
-                    onChange={(e) => setTrackSearchId(e.target.value)}
-                    className="flex-1 px-3.5 py-2 text-xs bg-[#F5F5F7] rounded-xl font-mono uppercase outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                  />
-                  <button
-                    type="submit"
-                    className="apple-button-primary px-4 py-2 text-xs font-medium cursor-pointer"
-                  >
-                    Track
-                  </button>
-                </form>
-
-                {trackSearched && (
-                  <div className="pt-3 border-t border-black/5 text-xs">
-                    {trackedUpload ? (
-                      <div className="space-y-1.5">
-                        <div className="font-semibold text-[#1D1D1F]">
-                          {trackedUpload.code}: {trackedUpload.title}
-                        </div>
-                        <p className="text-[#86868B]">
-                          Status: <span className="text-[#0071E3] font-medium">Published in Resource Bank & Drive</span>
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-[#86868B]">No record found for "{trackSearchId}".</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SECTION 3: OFFLINE AI ASSISTANT & ACADEMIC TOOLKIT */}
-        {activeSection === 'assistant' && (
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-semibold tracking-tight text-[#1D1D1F]">
-                Academic Assistant
-              </h2>
-              <p className="text-sm text-[#86868B] mt-1.5">
-                Offline syllabus intelligence, CGPA forecasting, and research tools.
-              </p>
-
-              {/* Segmented controls */}
-              <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs mt-4">
+              {/* Sub-tabs */}
+              <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs self-start sm:self-auto">
                 <button
-                  onClick={() => setAiTab('tutor')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    aiTab === 'tutor' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
+                  onClick={() => setAiSubTab('chat')}
+                  className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                    aiSubTab === 'chat' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
                   }`}
                 >
                   AI Tutor
                 </button>
                 <button
-                  onClick={() => setAiTab('cgpa')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    aiTab === 'cgpa' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
+                  onClick={() => setAiSubTab('cgpa')}
+                  className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                    aiSubTab === 'cgpa' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
                   }`}
                 >
-                  5.0 CGPA
+                  CGPA Calculator
                 </button>
                 <button
-                  onClick={() => setAiTab('timer')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    aiTab === 'timer' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
+                  onClick={() => setAiSubTab('timer')}
+                  className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                    aiSubTab === 'timer' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
                   }`}
                 >
                   Focus Timer
                 </button>
-                <button
-                  onClick={() => setAiTab('research')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    aiTab === 'research' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                  }`}
-                >
-                  Research Topics
-                </button>
               </div>
             </div>
 
-            {/* AI TAB: TUTOR CHAT (Apple Messages Style) */}
-            {aiTab === 'tutor' && (
-              <div className="bg-white rounded-3xl border border-black/5 shadow-xs overflow-hidden flex flex-col h-[540px]">
-                {/* Inquiry chips */}
-                <div className="px-4 py-2.5 bg-[#F5F5F7] border-b border-black/5 flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-none">
-                  <span className="text-[#86868B] text-[11px] shrink-0 mr-1">Suggested:</span>
+            {/* Sub-tab 1: AI Chat */}
+            {aiSubTab === 'chat' && (
+              <div className="bg-white rounded-3xl border border-black/5 shadow-xs flex flex-col h-[520px]">
+                {/* Chat Message Stream */}
+                <div ref={chatScrollRef} className="flex-1 p-5 overflow-y-auto space-y-3.5">
+                  {chatMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed whitespace-pre-wrap ${
+                          msg.role === 'user'
+                            ? 'bg-[#0071E3] text-white rounded-br-xs'
+                            : 'bg-[#F5F5F7] text-[#1D1D1F] rounded-bl-xs'
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick Prompts */}
+                <div className="px-4 py-2 bg-[#F5F5F7]/60 border-t border-black/5 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+                  <span className="text-[#86868B] shrink-0 font-medium">Quick ask:</span>
                   {[
-                    "Henri Fayol's 14 Principles",
-                    "Max Weber's Bureaucracy",
-                    "5.0 CGPA Formula",
+                    "Henri Fayol's 14 principles",
+                    "Max Weber bureaucracy",
+                    "5.0 CGPA scale",
                     "Project Chapters 1 to 5",
-                    "100L Courses",
-                    "Google Drive Link"
+                    "200 Level core courses"
                   ].map((chip) => (
                     <button
                       key={chip}
                       onClick={() => handleSendAi(chip)}
-                      className="px-2.5 py-1 rounded-full bg-white text-[#1D1D1F] hover:bg-black/5 transition text-xs whitespace-nowrap cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 bg-white hover:bg-black/5 border border-black/5 rounded-full text-[#1D1D1F] shrink-0 transition"
                     >
                       {chip}
                     </button>
                   ))}
                 </div>
 
-                {/* Messages stream */}
-                <div ref={chatScrollRef} className="flex-1 p-5 overflow-y-auto space-y-3 bg-[#FAFAFC]">
-                  {chatMessages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
-                          msg.role === 'user'
-                            ? 'bg-[#0071E3] text-white rounded-br-xs'
-                            : 'bg-[#E8E8ED] text-[#1D1D1F] rounded-bl-xs'
-                        }`}
-                      >
-                        {msg.text}
-                      </div>
-                      <span className="text-[10px] text-[#A1A1A6] mt-1 px-1">{msg.time || 'now'}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Input */}
-                <div className="p-3 bg-white border-t border-black/5 flex gap-2">
+                {/* Chat Input Bar */}
+                <div className="p-3 border-t border-black/5 flex items-center gap-2">
                   <input
                     type="text"
-                    placeholder="Ask a question..."
+                    placeholder="Ask about management theories, syllabus, projects, or formulas..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendAi();
-                    }}
-                    className="flex-1 px-4 py-2 text-xs bg-[#F5F5F7] rounded-full outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendAi()}
+                    className="flex-1 px-4 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
                   />
                   <button
                     onClick={() => handleSendAi()}
-                    className="apple-button-primary px-4 py-2 text-xs font-medium cursor-pointer"
+                    className="w-9 h-9 rounded-xl bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center justify-center transition shrink-0"
                   >
-                    Send
+                    <Send className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* AI TAB: CGPA CALCULATOR */}
-            {aiTab === 'cgpa' && (
-              <div className="bg-white p-7 sm:p-9 rounded-3xl border border-black/5 shadow-xs space-y-6">
-                <div className="text-center py-4">
-                  <div className="text-xs uppercase text-[#86868B] font-medium tracking-wide">
-                    Projected CGPA
+            {/* Sub-tab 2: 5.0 CGPA Calculator */}
+            {aiSubTab === 'cgpa' && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/5 shadow-xs space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-black/5">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#1D1D1F]">5.0 CGPA Calculator</h3>
+                    <p className="text-xs text-[#86868B]">Official grading scale: A=5, B=4, C=3, D=2, E=1, F=0.</p>
                   </div>
-                  <div className="text-5xl font-semibold tracking-tight text-[#1D1D1F] mt-1">
-                    {cgpaStats.cumulativeCgpa}
-                  </div>
-                  <div className="text-xs text-[#0071E3] font-medium mt-1">
-                    {cgpaStats.honors}
-                  </div>
-                  <div className="text-xs text-[#86868B] mt-1">
-                    Semester GPA: {cgpaStats.currentGpa} ({cgpaStats.currentPoints} Quality Points ÷ {cgpaStats.currentUnits} Units)
-                  </div>
+                  <button
+                    onClick={() =>
+                      setCgpaCourses([
+                        ...cgpaCourses,
+                        { id: Date.now().toString(), code: `BUS ${cgpaCourses.length + 1}01`, units: 3, grade: 'A' }
+                      ])
+                    }
+                    className="px-3 py-1.5 bg-[#0071E3]/10 hover:bg-[#0071E3]/20 text-[#0071E3] rounded-full text-xs font-medium inline-flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Course</span>
+                  </button>
                 </div>
 
                 {/* Course Inputs */}
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center justify-between text-xs text-[#86868B] pb-1">
-                    <span>Registered Courses ({cgpaCourses.length})</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCgpaCourses([
-                          ...cgpaCourses,
-                          { id: Date.now().toString(), code: `BUS ${200 + cgpaCourses.length}`, units: 3, grade: 'A' }
-                        ]);
-                      }}
-                      className="text-[#0071E3] font-medium hover:underline cursor-pointer"
-                    >
-                      + Add Course
-                    </button>
-                  </div>
-
-                  <div className="divide-y divide-black/5 border border-black/5 rounded-2xl overflow-hidden">
-                    {cgpaCourses.map((c, idx) => (
-                      <div key={c.id} className="p-3 bg-white flex items-center justify-between gap-3 text-xs">
-                        <input
-                          type="text"
-                          value={c.code}
-                          onChange={(e) => {
-                            const updated = [...cgpaCourses];
-                            updated[idx].code = e.target.value;
-                            setCgpaCourses(updated);
-                          }}
-                          className="w-24 px-2 py-1 bg-[#F5F5F7] rounded-lg uppercase font-medium"
-                          placeholder="BUS 101"
-                        />
-                        <div className="flex items-center gap-1 text-[#86868B]">
-                          <span>Units:</span>
-                          <select
-                            value={c.units}
-                            onChange={(e) => {
-                              const updated = [...cgpaCourses];
-                              updated[idx].units = Number(e.target.value);
-                              setCgpaCourses(updated);
-                            }}
-                            className="bg-[#F5F5F7] px-2 py-1 rounded-lg text-[#1D1D1F]"
-                          >
-                            <option value={1}>1</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={6}>6</option>
-                          </select>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#86868B]">
-                          <span>Grade:</span>
-                          <select
-                            value={c.grade}
-                            onChange={(e) => {
-                              const updated = [...cgpaCourses];
-                              updated[idx].grade = e.target.value;
-                              setCgpaCourses(updated);
-                            }}
-                            className="bg-[#F5F5F7] px-2 py-1 rounded-lg text-[#0071E3] font-medium"
-                          >
-                            <option value="A">A (5.0)</option>
-                            <option value="B">B (4.0)</option>
-                            <option value="C">C (3.0)</option>
-                            <option value="D">D (2.0)</option>
-                            <option value="E">E (1.0)</option>
-                            <option value="F">F (0.0)</option>
-                          </select>
-                        </div>
+                <div className="space-y-2.5">
+                  {cgpaCourses.map((c, idx) => (
+                    <div key={c.id} className="flex items-center gap-2 text-xs">
+                      <input
+                        type="text"
+                        value={c.code}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCgpaCourses(cgpaCourses.map((item) => (item.id === c.id ? { ...item, code: val } : item)));
+                        }}
+                        className="w-28 px-2.5 py-1.5 bg-[#F5F5F7] rounded-lg font-medium outline-none"
+                      />
+                      <select
+                        value={c.units}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setCgpaCourses(cgpaCourses.map((item) => (item.id === c.id ? { ...item, units: val } : item)));
+                        }}
+                        className="px-2.5 py-1.5 bg-[#F5F5F7] rounded-lg outline-none"
+                      >
+                        {[1, 2, 3, 4, 6].map((u) => (
+                          <option key={u} value={u}>
+                            {u} Units
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={c.grade}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCgpaCourses(cgpaCourses.map((item) => (item.id === c.id ? { ...item, grade: val } : item)));
+                        }}
+                        className="px-2.5 py-1.5 bg-[#F5F5F7] rounded-lg font-bold outline-none"
+                      >
+                        {['A', 'B', 'C', 'D', 'E', 'F'].map((g) => (
+                          <option key={g} value={g}>
+                            Grade {g}
+                          </option>
+                        ))}
+                      </select>
+                      {cgpaCourses.length > 1 && (
                         <button
-                          type="button"
-                          onClick={() => {
-                            if (cgpaCourses.length > 1) {
-                              setCgpaCourses(cgpaCourses.filter((_, i) => i !== idx));
-                            }
-                          }}
-                          className="text-[#A1A1A6] hover:text-red-600 p-1"
+                          onClick={() => setCgpaCourses(cgpaCourses.filter((item) => item.id !== c.id))}
+                          className="p-1 text-[#86868B] hover:text-red-600"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-4 h-4" />
                         </button>
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Previous Cumulative Input */}
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-black/5 text-xs">
+                  <div>
+                    <label className="block text-[#86868B] mb-1">Previous CGPA (Optional)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g. 4.25"
+                      value={prevCgpa}
+                      onChange={(e) => setPrevCgpa(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#86868B] mb-1">Previous Total Units</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 36"
+                      value={prevUnits}
+                      onChange={(e) => setPrevUnits(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
+                    />
                   </div>
                 </div>
+
+                {/* Results Card */}
+                {(() => {
+                  const res = calculateCgpa();
+                  return (
+                    <div className="p-5 bg-gradient-to-r from-[#0071E3]/5 to-[#0071E3]/15 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <div className="text-xs text-[#86868B]">Semester GPA</div>
+                        <div className="text-3xl font-bold text-[#0071E3]">{res.currentGpa}</div>
+                        <div className="text-xs text-[#86868B] mt-0.5">{res.totalUnits} credit units</div>
+                      </div>
+                      <div className="text-right sm:border-l sm:border-black/5 sm:pl-6">
+                        <div className="text-xs text-[#86868B]">Projected Cumulative CGPA</div>
+                        <div className="text-2xl font-bold text-[#1D1D1F]">{res.cumulativeCgpa}</div>
+                        <div className="text-xs font-medium text-emerald-600 mt-0.5">{res.honours}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
-            {/* AI TAB: FOCUS TIMER */}
-            {aiTab === 'timer' && (
-              <div className="bg-white p-9 rounded-3xl border border-black/5 shadow-xs text-center space-y-6">
+            {/* Sub-tab 3: Focus Timer */}
+            {aiSubTab === 'timer' && (
+              <div className="bg-white p-8 rounded-3xl border border-black/5 shadow-xs text-center space-y-6">
                 <div>
                   <h3 className="text-base font-semibold text-[#1D1D1F]">
-                    {timerMode === 'study' ? 'Focus Session' : 'Short Break'}
+                    {timerMode === 'study' ? 'Deep Study Session' : 'Rest Break'}
                   </h3>
                   <p className="text-xs text-[#86868B] mt-0.5">
-                    Structured 25-minute study intervals.
+                    25-minute Pomodoro focus interval for study efficiency.
                   </p>
                 </div>
 
-                <div className="font-mono text-6xl font-light text-[#1D1D1F] tracking-tight">
-                  {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:
-                  {String(timerSeconds % 60).padStart(2, '0')}
+                <div className="text-6xl font-light tracking-tight font-mono text-[#1D1D1F]">
+                  {Math.floor(timerSeconds / 60)
+                    .toString()
+                    .padStart(2, '0')}
+                  :{(timerSeconds % 60).toString().padStart(2, '0')}
                 </div>
 
                 <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={() => setTimerRunning(!timerRunning)}
-                    className="apple-button-primary px-6 py-2 text-xs font-medium cursor-pointer"
+                    className="px-6 py-2.5 bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full text-xs font-medium inline-flex items-center gap-1.5 shadow-xs"
                   >
-                    {timerRunning ? 'Pause' : 'Start'}
+                    {timerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                    <span>{timerRunning ? 'Pause' : 'Start Timer'}</span>
                   </button>
                   <button
                     onClick={() => {
                       setTimerRunning(false);
                       setTimerSeconds(timerMode === 'study' ? 25 * 60 : 5 * 60);
                     }}
-                    className="apple-button-secondary px-5 py-2 text-xs font-medium cursor-pointer"
+                    className="px-4 py-2.5 bg-[#E8E8ED] hover:bg-[#D8D8DD] text-[#1D1D1F] rounded-full text-xs font-medium inline-flex items-center gap-1"
                   >
-                    Reset
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset</span>
                   </button>
                 </div>
 
                 <div className="text-xs text-[#86868B]">
-                  Sessions completed today: {studySessionsCompleted}
-                </div>
-              </div>
-            )}
-
-            {/* AI TAB: RESEARCH TOPICS */}
-            {aiTab === 'research' && (
-              <div className="bg-white p-7 sm:p-9 rounded-3xl border border-black/5 shadow-xs space-y-5">
-                <div>
-                  <h3 className="text-base font-semibold text-[#1D1D1F]">
-                    Research Topic Generator
-                  </h3>
-                  <p className="text-xs text-[#86868B] mt-0.5">
-                    Curated research proposals for 400L final year projects.
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <select
-                    value={projectArea}
-                    onChange={(e) => setProjectArea(e.target.value)}
-                    className="flex-1 px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl text-[#1D1D1F] outline-none"
-                  >
-                    <option value="General Management">Strategic & General Management</option>
-                    <option value="Marketing & Consumer Behaviour">Marketing & Consumer Behaviour</option>
-                    <option value="Human Resource Management">Human Resource Management</option>
-                    <option value="Finance & Quantitative Business">Finance & Quantitative Analysis</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={generateResearchTopics}
-                    className="apple-button-primary px-4 py-2 text-xs font-medium cursor-pointer"
-                  >
-                    Generate
-                  </button>
-                </div>
-
-                <div className="divide-y divide-black/5 text-xs">
-                  {(generatedTopics.length > 0 ? generatedTopics : [
-                    "Strategic Planning and Operational Performance in Emerging Small and Medium Enterprises.",
-                    "Organizational Culture as a Catalyst for Employee Commitment in Commercial Organizations.",
-                    "Change Management Strategies and Enterprise Agility During Economic Realignments.",
-                    "Leadership Paradigms and Productivity: A Study of High-Growth Establishments."
-                  ]).map((t, idx) => (
-                    <div key={idx} className="py-3 flex items-start justify-between gap-3">
-                      <p className="text-[#1D1D1F] leading-relaxed">{t}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(t);
-                          showToast('Topic copied.');
-                        }}
-                        className="text-[#86868B] hover:text-[#0071E3] p-1 cursor-pointer shrink-0"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                  Sessions Completed: <strong className="text-[#1D1D1F]">{sessionsDone}</strong>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* SECTION 4: COMPLAINTS & FEEDBACK */}
-        {activeSection === 'suggestions' && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight text-[#1D1D1F]">
-                Feedback & Grievance Desk
-              </h2>
-              <p className="text-sm text-[#86868B] mt-1.5">
-                Direct channel to the Executive Council for CA inquiries, timetable concerns, or suggestions.
-              </p>
+        {/* ========================================================
+            PILLAR 3: SUGGESTIONS & COMPLAINTS BOX
+            ======================================================== */}
+        {activeTab === 'suggestions' && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Header & Toggle */}
+            <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-[#0071E3]" />
+                  <h1 className="text-lg font-semibold text-[#1D1D1F]">
+                    Student Suggestion & Grievance Box
+                  </h1>
+                </div>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Direct line to the Departmental EXCOS. Submit anonymously or provide contact details.
+                </p>
+              </div>
 
-              <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs mt-5">
+              {/* View Toggle */}
+              <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs self-start sm:self-auto">
                 <button
-                  onClick={() => setFeedbackTab('submit')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    feedbackTab === 'submit' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
+                  onClick={() => setSuggestionView('submit')}
+                  className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                    suggestionView === 'submit' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
                   }`}
                 >
-                  Submit Inquiry
+                  New Suggestion
                 </button>
                 <button
-                  onClick={() => setFeedbackTab('track')}
-                  className={`px-4 py-1.5 rounded-full font-medium transition cursor-pointer ${
-                    feedbackTab === 'track' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
+                  onClick={() => setSuggestionView('track')}
+                  className={`px-3.5 py-1 rounded-full font-medium transition cursor-pointer ${
+                    suggestionView === 'track' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
                   }`}
                 >
-                  Track Inquiry
+                  Track Ticket
                 </button>
               </div>
             </div>
 
-            {feedbackTab === 'submit' ? (
-              <div className="bg-white p-7 sm:p-9 rounded-3xl border border-black/5 shadow-xs space-y-5">
+            {/* Submit View */}
+            {suggestionView === 'submit' && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/5 shadow-xs space-y-5">
                 {submittedTicketId && (
-                  <div className="bg-[#F5F5F7] p-5 rounded-2xl text-xs space-y-1.5">
-                    <div className="font-semibold text-[#1D1D1F] flex items-center gap-1.5">
-                      <Check className="w-4 h-4 text-[#0071E3]" />
-                      <span>Inquiry registered</span>
+                  <div className="p-4 bg-[#F5F5F7] rounded-2xl text-xs space-y-2">
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Suggestion Logged with EXCOS</span>
                     </div>
                     <p className="text-[#86868B]">
-                      Reference number: <strong className="font-mono text-[#1D1D1F]">{submittedTicketId}</strong>
+                      Keep this reference code to track executive updates or response:
                     </p>
+                    <div className="font-mono font-bold text-sm text-[#1D1D1F]">
+                      {submittedTicketId}
+                    </div>
                   </div>
                 )}
 
-                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <form onSubmit={handleSuggestionSubmit} className="space-y-4">
+                  {/* Anonymous Toggle */}
+                  <div className="flex items-center justify-between p-3.5 bg-[#F5F5F7] rounded-2xl text-xs">
                     <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Matric Number</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. 21/04/..."
-                        value={fbMatric}
-                        onChange={(e) => setFbMatric(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl uppercase outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
+                      <span className="font-medium text-[#1D1D1F]">Submit Anonymously</span>
+                      <p className="text-[#86868B] text-[11px]">Your name and matric will not be shown to officers.</p>
                     </div>
-                    <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Student Name</label>
-                      <input
-                        type="text"
-                        placeholder="Name or Anonymous"
-                        value={fbName}
-                        onChange={(e) => setFbName(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
-                      />
-                    </div>
+                    <input
+                      type="checkbox"
+                      checked={fbIsAnonymous}
+                      onChange={(e) => setFbIsAnonymous(e.target.checked)}
+                      className="w-4 h-4 accent-[#0071E3] cursor-pointer"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  {!fbIsAnonymous && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-[#86868B] mb-1">Matric Number (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 19/04/02/001"
+                          value={fbMatric}
+                          onChange={(e) => setFbMatric(e.target.value)}
+                          className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#86868B] mb-1">Full Name (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="Your name"
+                          value={fbName}
+                          onChange={(e) => setFbName(e.target.value)}
+                          className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs text-[#86868B] mb-1">Level</label>
+                      <label className="block text-xs text-[#86868B] mb-1">Academic Level</label>
                       <select
                         value={fbLevel}
                         onChange={(e) => setFbLevel(e.target.value)}
@@ -2213,11 +1456,11 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                         onChange={(e) => setFbCategory(e.target.value)}
                         className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
                       >
-                        <option value="Course Materials">Course Material</option>
-                        <option value="Missing CA Grades">Missing CA Score</option>
-                        <option value="Lecture Clashes">Timetable Clash</option>
-                        <option value="EXCOS Welfare">Department Welfare</option>
-                        <option value="General Suggestion">General Suggestion</option>
+                        <option value="Course Materials">Course Materials / Handouts</option>
+                        <option value="Lecture Hall">Lecture Hall & Facilities</option>
+                        <option value="Timetable">Timetable & Scheduling</option>
+                        <option value="Examination">Examination Issues</option>
+                        <option value="General Feedback">General Idea / Suggestion</option>
                       </select>
                     </div>
 
@@ -2229,7 +1472,7 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                         className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
                       >
                         <option value="Normal">Normal</option>
-                        <option value="Urgent">Urgent</option>
+                        <option value="Urgent">Urgent / Time-Sensitive</option>
                       </select>
                     </div>
                   </div>
@@ -2239,7 +1482,7 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                     <input
                       type="text"
                       required
-                      placeholder="Brief headline..."
+                      placeholder="e.g. Request for BUS 301 2024 Past Questions on Drive"
                       value={fbSubject}
                       onChange={(e) => setFbSubject(e.target.value)}
                       className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
@@ -2247,63 +1490,92 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                   </div>
 
                   <div>
-                    <label className="block text-xs text-[#86868B] mb-1">Details</label>
+                    <label className="block text-xs text-[#86868B] mb-1">Details & Constructive Notes</label>
                     <textarea
-                      rows={3}
+                      rows={4}
                       required
-                      placeholder="Explain the circumstance or question..."
+                      placeholder="Describe the issue, recommendation, or request in detail..."
                       value={fbDetails}
                       onChange={(e) => setFbDetails(e.target.value)}
                       className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full apple-button-primary py-2.5 text-xs font-medium cursor-pointer"
-                  >
-                    Submit Inquiry
-                  </button>
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 text-xs font-medium text-white bg-[#0071E3] hover:bg-[#0077ED] rounded-full inline-flex items-center gap-1.5 shadow-xs transition"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Submit to EXCOS</span>
+                    </button>
+                  </div>
                 </form>
               </div>
-            ) : (
-              <div className="bg-white p-7 rounded-3xl border border-black/5 shadow-xs space-y-4">
-                <h3 className="text-sm font-semibold text-[#1D1D1F]">Track Inquiry Status</h3>
+            )}
+
+            {/* Track View */}
+            {suggestionView === 'track' && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-black/5 shadow-xs space-y-6">
                 <form onSubmit={handleTrackTicket} className="flex gap-2">
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. ACAD-TIC-123456"
+                    placeholder="Enter Ticket ID (e.g. ACAD-TIC-123456)..."
                     value={trackTicketInput}
                     onChange={(e) => setTrackTicketInput(e.target.value)}
-                    className="flex-1 px-3.5 py-2 text-xs bg-[#F5F5F7] rounded-xl font-mono uppercase outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                    className="flex-1 px-4 py-2 text-xs bg-[#F5F5F7] rounded-xl uppercase font-mono outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
                   />
                   <button
                     type="submit"
-                    className="apple-button-primary px-4 py-2 text-xs font-medium cursor-pointer"
+                    className="px-5 py-2 text-xs font-medium text-white bg-[#0071E3] rounded-xl"
                   >
-                    Look Up
+                    Track
                   </button>
                 </form>
 
-                {trackTicketSearched && (
-                  <div className="pt-3 border-t border-black/5 text-xs">
+                {trackSearched && (
+                  <div>
                     {trackedTicket ? (
-                      <div className="space-y-2">
-                        <div className="font-semibold text-[#1D1D1F]">
-                          {trackedTicket.subject}
+                      <div className="p-5 bg-[#F5F5F7] rounded-2xl space-y-3 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-semibold text-[#1D1D1F]">
+                            {trackedTicket.ticketId}
+                          </span>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
+                              trackedTicket.status === 'Resolved'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : trackedTicket.status === 'Under Review'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {trackedTicket.status}
+                          </span>
                         </div>
-                        <p className="text-[#86868B]">
-                          Status: <span className="text-[#0071E3] font-medium">{trackedTicket.status}</span>
-                        </p>
+
+                        <div>
+                          <div className="font-medium text-[#1D1D1F]">{trackedTicket.subject}</div>
+                          <p className="text-[#86868B] mt-1">{trackedTicket.details}</p>
+                        </div>
+
                         {trackedTicket.excosResponse && (
-                          <div className="p-3 bg-[#F5F5F7] rounded-xl text-xs text-[#1D1D1F] mt-2">
-                            <strong>Response:</strong> {trackedTicket.excosResponse}
+                          <div className="p-3 bg-white rounded-xl border border-black/5 mt-2">
+                            <span className="text-[11px] font-semibold text-[#0071E3]">
+                              Official Executive Response:
+                            </span>
+                            <p className="text-[#1D1D1F] mt-1">{trackedTicket.excosResponse}</p>
                           </div>
                         )}
+
+                        <div className="text-[11px] text-[#A1A1A6]">
+                          Submitted on {trackedTicket.date} · Level: {trackedTicket.level}
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-[#86868B]">No inquiry found for "{trackTicketInput}".</p>
+                      <div className="p-6 text-center text-xs text-[#86868B]">
+                        No suggestion found with that Ticket ID.
+                      </div>
                     )}
                   </div>
                 )}
@@ -2312,154 +1584,147 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
           </div>
         )}
 
-        {/* SECTION 5: LEADERSHIP DIRECTORY */}
-        {activeSection === 'leadership' && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-semibold tracking-tight text-[#1D1D1F]">
-                Leadership Directory
-              </h2>
-              <p className="text-sm text-[#86868B] mt-1.5">
-                Executive Council officers for the current academic session.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {leadership.map((leader, idx) => (
-                <div
-                  key={idx}
-                  className="apple-card p-6 flex flex-col justify-between"
-                >
-                  <div>
-                    <span className="text-[11px] font-semibold text-[#0071E3] tracking-wide uppercase">
-                      {leader.role}
-                    </span>
-                    <h3 className="font-semibold text-base text-[#1D1D1F] mt-1">
-                      {leader.name}
-                    </h3>
-                    <p className="text-xs text-[#86868B] mt-0.5">
-                      Session: {leader.tenure}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 mt-6 border-t border-black/5 text-xs text-[#86868B] space-y-1">
-                    <div className="truncate">
-                      <a href={`mailto:${leader.email}`} className="text-[#0071E3] hover:underline">
-                        {leader.email}
-                      </a>
-                    </div>
-                    <div>{leader.phone}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 6: ADMINISTRATIVE CONSOLE */}
-        {activeSection === 'admin' && (
-          <div className="max-w-3xl mx-auto space-y-6">
+        {/* ========================================================
+            PILLAR 4: ADMIN SPACE (EXCOS PASSCODE PROTECTED)
+            ======================================================== */}
+        {activeTab === 'admin' && (
+          <div className="space-y-6 animate-fade-in">
             {!isAdminLoggedIn ? (
-              <div className="bg-white p-10 rounded-3xl border border-black/5 text-center max-w-sm mx-auto space-y-4">
-                <h3 className="text-xl font-semibold text-[#1D1D1F]">Administrative Portal</h3>
-                <p className="text-xs text-[#86868B]">
-                  Enter your passcode to manage resources and moderations.
-                </p>
-                <button
-                  onClick={() => setIsAdminAuthModalOpen(true)}
-                  className="apple-button-primary w-full py-2.5 text-xs font-medium cursor-pointer"
-                >
-                  Enter Passcode (2026)
-                </button>
+              /* Passcode Login Screen */
+              <div className="bg-white p-8 rounded-3xl border border-black/5 shadow-xs max-w-sm mx-auto text-center space-y-5 my-8">
+                <div className="w-12 h-12 rounded-2xl bg-[#0071E3]/10 text-[#0071E3] flex items-center justify-center mx-auto">
+                  <Shield className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-[#1D1D1F]">EXCOS Admin Space</h2>
+                  <p className="text-xs text-[#86868B] mt-0.5">
+                    Authorized officers only. Default passcode: <code className="font-mono text-[#1D1D1F]">2026</code>
+                  </p>
+                </div>
+
+                <form onSubmit={handleAdminLogin} className="space-y-3">
+                  <input
+                    type="password"
+                    placeholder="Enter Passcode..."
+                    value={adminPinInput}
+                    onChange={(e) => setAdminPinInput(e.target.value)}
+                    className="w-full px-4 py-2.5 text-center tracking-widest text-sm bg-[#F5F5F7] rounded-2xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+                  />
+                  {adminPinError && (
+                    <p className="text-xs text-red-600">Incorrect passcode. Try again.</p>
+                  )}
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full text-xs font-medium transition"
+                  >
+                    Authenticate
+                  </button>
+                </form>
               </div>
             ) : (
+              /* Authenticated Admin Dashboard */
               <div className="space-y-6">
-                {/* Console header */}
-                <div className="bg-white p-6 rounded-3xl border border-black/5 flex items-center justify-between">
+                <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-lg font-semibold text-[#1D1D1F]">Administrative Console</h2>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-[#0071E3]" />
+                      <h1 className="text-lg font-semibold text-[#1D1D1F]">Executive Console</h1>
+                    </div>
                     <p className="text-xs text-[#86868B] mt-0.5">
-                      Connected to Drive: <code className="font-mono text-[#0071E3]">{GOOGLE_DRIVE_FOLDER_ID}</code>
+                      Review student complaints, manage Drive resources, and update portal settings.
                     </p>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <a
-                      href={GOOGLE_DRIVE_FOLDER_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="apple-button-secondary px-3.5 py-1.5 text-xs font-medium inline-flex items-center gap-1"
-                    >
-                      <span>Drive</span>
-                      <ArrowUpRight className="w-3 h-3" />
-                    </a>
+                    <div className="bg-[#E8E8ED] p-1 rounded-full inline-flex text-xs">
+                      <button
+                        onClick={() => setAdminActiveTab('tickets')}
+                        className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                          adminActiveTab === 'tickets' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
+                        }`}
+                      >
+                        Suggestions ({allTickets.length})
+                      </button>
+                      <button
+                        onClick={() => setAdminActiveTab('resources')}
+                        className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                          adminActiveTab === 'resources' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
+                        }`}
+                      >
+                        Resources ({resources.length})
+                      </button>
+                      <button
+                        onClick={() => setAdminActiveTab('settings')}
+                        className={`px-3 py-1 rounded-full font-medium transition cursor-pointer ${
+                          adminActiveTab === 'settings' ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B]'
+                        }`}
+                      >
+                        Settings
+                      </button>
+                    </div>
+
                     <button
                       onClick={handleAdminLogout}
-                      className="text-xs text-red-600 hover:underline px-2 py-1 cursor-pointer"
+                      className="p-2 text-[#86868B] hover:text-red-600 rounded-full hover:bg-black/5"
+                      title="Sign Out"
                     >
-                      Sign Out
+                      <LogOut className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Subnav */}
-                <div className="bg-[#E8E8ED] p-1 rounded-full flex items-center gap-1 overflow-x-auto text-xs">
-                  {[
-                    { id: 'pending', label: `Pending (${pendingUploads.length})` },
-                    { id: 'resources', label: `Resources (${resources.length})` },
-                    { id: 'recycle', label: `Trash (${recycledResources.length})` },
-                    { id: 'tickets', label: `Inquiries (${allTickets.length})` },
-                    { id: 'leadership', label: 'Directory' },
-                    { id: 'pin', label: 'Passcode' },
-                    { id: 'audit', label: 'Backup' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setAdminTab(tab.id as any)}
-                      className={`px-3.5 py-1.5 rounded-full font-medium transition cursor-pointer whitespace-nowrap ${
-                        adminTab === tab.id ? 'bg-white text-[#1D1D1F] shadow-xs' : 'text-[#86868B] hover:text-[#1D1D1F]'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Moderation Queue */}
-                {adminTab === 'pending' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 space-y-4">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#1D1D1F]">Pending Queue ({pendingUploads.length})</span>
-                      <button onClick={refreshAllData} className="text-[#0071E3] hover:underline cursor-pointer">
-                        Refresh
-                      </button>
-                    </div>
-
-                    {pendingUploads.length === 0 ? (
-                      <p className="text-xs text-[#86868B] py-6 text-center">No pending items.</p>
+                {/* Tab 1: Suggestions Manager */}
+                {adminActiveTab === 'tickets' && (
+                  <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs space-y-4">
+                    <h3 className="text-sm font-semibold text-[#1D1D1F]">Student Suggestions & Tickets</h3>
+                    {allTickets.length === 0 ? (
+                      <p className="text-xs text-[#86868B] py-4">No suggestions received yet.</p>
                     ) : (
-                      <div className="divide-y divide-black/5 text-xs">
-                        {pendingUploads.map((up) => (
-                          <div key={up.trackingId} className="py-3.5 flex items-center justify-between gap-4">
-                            <div>
-                              <div className="font-semibold text-[#1D1D1F]">
-                                {up.code} · {up.title}
+                      <div className="space-y-3">
+                        {allTickets.map((t) => (
+                          <div
+                            key={t.ticketId}
+                            className="p-4 bg-[#F5F5F7] rounded-2xl flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-semibold text-[#1D1D1F]">{t.ticketId}</span>
+                                <span className="text-[#86868B]">·</span>
+                                <span className="text-[#86868B]">{t.category}</span>
+                                <span className="text-[#86868B]">·</span>
+                                <span className="font-medium text-[#1D1D1F]">{t.studentName} ({t.matricNumber})</span>
                               </div>
-                              <div className="text-[#86868B] text-[11px] mt-0.5">
-                                {up.level} · By {up.uploader} · {up.size}
-                              </div>
+                              <h4 className="font-semibold text-sm text-[#1D1D1F]">{t.subject}</h4>
+                              <p className="text-[#86868B] leading-relaxed">{t.details}</p>
+                              {t.excosResponse && (
+                                <div className="p-2.5 bg-white rounded-xl text-[11px] border border-black/5 mt-1.5">
+                                  <span className="font-semibold text-[#0071E3]">EXCOS Response:</span> {t.excosResponse}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => approveStudentUpload(up)}
-                                className="apple-button-primary px-3 py-1.5 text-xs font-medium cursor-pointer"
+
+                            <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  t.status === 'Resolved'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : t.status === 'Under Review'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                }`}
                               >
-                                Verify
-                              </button>
+                                {t.status}
+                              </span>
+
                               <button
-                                onClick={() => rejectStudentUpload(up)}
-                                className="text-red-600 hover:underline px-2 py-1 cursor-pointer"
+                                onClick={() => {
+                                  setTicketReplyModal(t);
+                                  setReplyText(t.excosResponse || '');
+                                  setReplyStatus(t.status);
+                                }}
+                                className="px-3 py-1 bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full text-[11px] font-medium cursor-pointer"
                               >
-                                Reject
+                                Reply / Resolve
                               </button>
                             </div>
                           </div>
@@ -2469,159 +1734,90 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
                   </div>
                 )}
 
-                {/* Active Resources */}
-                {adminTab === 'resources' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 space-y-4">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#1D1D1F]">All Active Documents ({resources.length})</span>
-                      <button onClick={handleExportBackup} className="text-[#0071E3] hover:underline cursor-pointer">
-                        Export JSON
+                {/* Tab 2: Resources Manager */}
+                {adminActiveTab === 'resources' && (
+                  <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-[#1D1D1F]">Manage Resource Bank</h3>
+                      <button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        className="px-3 py-1.5 bg-[#0071E3] text-white rounded-full text-xs font-medium inline-flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Upload New Material</span>
                       </button>
                     </div>
+
                     <div className="divide-y divide-black/5 text-xs">
                       {resources.map((r) => (
-                        <div key={r.id} className="py-2.5 flex items-center justify-between gap-4">
+                        <div key={r.id} className="py-3 flex items-center justify-between">
                           <div>
-                            <span className="font-semibold text-[#1D1D1F]">{r.code}</span> · {r.title}
-                          </div>
-                          <button
-                            onClick={() => softDeleteResource(r)}
-                            className="text-red-600 hover:underline cursor-pointer"
-                          >
-                            Trash
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recycle Bin */}
-                {adminTab === 'recycle' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 space-y-4 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#1D1D1F]">Trash ({recycledResources.length})</span>
-                      {recycledResources.length > 0 && (
-                        <button onClick={emptyRecycleBin} className="text-red-600 hover:underline cursor-pointer">
-                          Empty Trash
-                        </button>
-                      )}
-                    </div>
-                    {recycledResources.length === 0 ? (
-                      <p className="text-[#86868B] py-6 text-center">Trash is empty.</p>
-                    ) : (
-                      <div className="divide-y divide-black/5">
-                        {recycledResources.map((item) => (
-                          <div key={item.id} className="py-2.5 flex items-center justify-between gap-4">
-                            <div>{item.code}: {item.title}</div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => restoreRecycledResource(item)}
-                                className="text-[#0071E3] hover:underline cursor-pointer"
-                              >
-                                Restore
-                              </button>
-                              <button
-                                onClick={() => permanentDeleteResource(item)}
-                                className="text-red-600 hover:underline cursor-pointer"
-                              >
-                                Delete
-                              </button>
+                            <span className="font-semibold text-[#1D1D1F]">{r.code}</span> — {r.title}
+                            <div className="text-[11px] text-[#86868B]">
+                              {r.level} · {r.type} · {r.format} ({r.size}) · By {r.uploader}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Tickets */}
-                {adminTab === 'tickets' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 space-y-4 text-xs">
-                    <span className="font-semibold text-[#1D1D1F]">Student Inquiries ({allTickets.length})</span>
-                    {allTickets.length === 0 ? (
-                      <p className="text-[#86868B] py-6 text-center">No inquiries logged.</p>
-                    ) : (
-                      <div className="divide-y divide-black/5">
-                        {allTickets.map((t) => (
-                          <div key={t.ticketId} className="py-3 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-[#1D1D1F]">{t.subject}</span>
-                              <span className="text-[#0071E3]">{t.status}</span>
-                            </div>
-                            <p className="text-[#86868B]">{t.details}</p>
-                            <button
-                              onClick={() => handleRespondToTicket(t)}
-                              className="text-[#0071E3] font-medium hover:underline cursor-pointer pt-1"
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={r.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 text-[#0071E3] hover:bg-black/5 rounded-full"
+                              title="Drive"
                             >
-                              {t.excosResponse ? 'Edit Response' : 'Reply & Resolve'}
+                              <ArrowUpRight className="w-4 h-4" />
+                            </a>
+                            <button
+                              onClick={() => handleDeleteResource(r.id, r.code)}
+                              className="p-1.5 text-[#86868B] hover:text-red-600 rounded-full"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Passcode changer */}
-                {adminTab === 'pin' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 max-w-sm space-y-4 text-xs">
-                    <h3 className="font-semibold text-[#1D1D1F]">Update Passcode</h3>
-                    <form onSubmit={handleChangePin} className="space-y-3">
-                      <input
-                        type="password"
-                        required
-                        placeholder="Current passcode"
-                        value={currentPinField}
-                        onChange={(e) => setCurrentPinField(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
-                      />
-                      <input
-                        type="password"
-                        required
-                        placeholder="New passcode"
-                        value={newPinField}
-                        onChange={(e) => setNewPinField(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
-                      />
-                      <input
-                        type="password"
-                        required
-                        placeholder="Confirm new passcode"
-                        value={confirmPinField}
-                        onChange={(e) => setConfirmPinField(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
-                      />
-                      <button
-                        type="submit"
-                        className="apple-button-primary w-full py-2 text-xs font-medium cursor-pointer"
-                      >
-                        Update
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-                {/* Audit & Backup */}
-                {adminTab === 'audit' && (
-                  <div className="bg-white p-7 rounded-3xl border border-black/5 space-y-4 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#1D1D1F]">Audit Records & Handover</span>
-                      <button
-                        onClick={handleExportBackup}
-                        className="apple-button-primary px-3.5 py-1.5 text-xs font-medium cursor-pointer"
-                      >
-                        Download Backup
-                      </button>
-                    </div>
-                    <div className="divide-y divide-black/5 font-mono text-[11px]">
-                      {auditLogs.slice(0, 30).map((l) => (
-                        <div key={l.id} className="py-2 flex items-center justify-between text-[#86868B]">
-                          <span>{l.action}</span>
-                          <span>{l.performedBy}</span>
-                          <span>{new Date(l.timestamp).toLocaleDateString()}</span>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 3: Admin Settings */}
+                {adminActiveTab === 'settings' && (
+                  <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-xs space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#1D1D1F]">Change Admin Passcode</h3>
+                      <p className="text-xs text-[#86868B] mt-0.5">Customize the passcode for future EXCOS logins.</p>
+                      <form onSubmit={handleChangeAdminPin} className="flex gap-2 mt-3 max-w-xs">
+                        <input
+                          type="password"
+                          placeholder="New Passcode..."
+                          value={newAdminPin}
+                          onChange={(e) => setNewAdminPin(e.target.value)}
+                          className="flex-1 px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-[#0071E3] text-white rounded-xl text-xs font-medium"
+                        >
+                          Save
+                        </button>
+                      </form>
+                    </div>
+
+                    <div className="pt-4 border-t border-black/5">
+                      <h3 className="text-sm font-semibold text-[#1D1D1F]">Recent Audit Actions</h3>
+                      <div className="mt-3 space-y-2 text-xs">
+                        {auditLogs.slice(0, 5).map((log) => (
+                          <div key={log.id} className="p-2.5 bg-[#F5F5F7] rounded-xl flex items-center justify-between">
+                            <div>
+                              <span className="font-semibold text-[#1D1D1F]">{log.action}</span>: {log.details}
+                            </div>
+                            <span className="text-[10px] text-[#86868B]">
+                              {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -2631,212 +1827,82 @@ Accessible across iOS, macOS, Android, and Windows with no account sign-in requi
         )}
       </main>
 
-      {/* DOCUMENT PREVIEW MODAL (Apple Clean Sheet) */}
-      {previewResource && (
+      {/* Reply Modal */}
+      {ticketReplyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col animate-scale-up">
-            <div className="p-6 border-b border-black/5 flex items-center justify-between">
-              <div>
-                <span className="text-xs text-[#86868B]">
-                  {previewResource.code} · {previewResource.level} · {previewResource.type}
-                </span>
-                <h3 className="font-semibold text-base text-[#1D1D1F] mt-0.5">
-                  {previewResource.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setPreviewResource(null)}
-                className="p-1.5 text-[#86868B] hover:text-[#1D1D1F] rounded-full hover:bg-black/5 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto text-xs text-[#86868B] leading-relaxed space-y-3 font-mono bg-[#F5F5F7]">
-{`Course: ${previewResource.code} - ${previewResource.title}
-Contributor: ${previewResource.uploader}
-Date: ${previewResource.date}
-Format: ${previewResource.format} (${previewResource.size})
-Google Drive Link: ${previewResource.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
-
-Summary:
-${previewResource.description}
-
-Curriculum Topics:
-1. Classical Management Theories & Scientific School
-2. Henri Fayol's 14 Principles of Management
-3. Decision Making Under Risk & Quantitative Formulations
-4. Empirical Review & Examination Case Study Analysis`}
-            </div>
-
-            <div className="p-4 border-t border-black/5 flex items-center justify-between">
-              <a
-                href={previewResource.driveUrl || GOOGLE_DRIVE_FOLDER_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[#0071E3] font-medium hover:underline inline-flex items-center gap-1"
-              >
-                <span>Open in Drive</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </a>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewResource(null)}
-                  className="px-4 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full cursor-pointer"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleDownload(previewResource);
-                    setPreviewResource(null);
-                  }}
-                  className="apple-button-primary px-4 py-2 text-xs font-medium cursor-pointer"
-                >
-                  Download
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* REPORT MODAL */}
-      {reportModalResource && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 animate-scale-up">
-            <h3 className="text-sm font-semibold text-[#1D1D1F] mb-1">Report Resource</h3>
-            <p className="text-xs text-[#86868B] mb-4">
-              {reportModalResource.code}: {reportModalResource.title}
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-scale-up space-y-4">
+            <h3 className="text-sm font-semibold text-[#1D1D1F]">
+              Reply to Ticket {ticketReplyModal.ticketId}
+            </h3>
+            <p className="text-xs text-[#86868B]">
+              Subject: <strong>{ticketReplyModal.subject}</strong>
             </p>
 
-            <form onSubmit={handleReportSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[#86868B] mb-1">Reason</label>
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
-                >
-                  <option value="Outdated Content">Outdated syllabus</option>
-                  <option value="Illegible Document">Illegible scan</option>
-                  <option value="Incorrect Course Code">Incorrect course code</option>
-                  <option value="Duplicate Upload">Duplicate document</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-xs text-[#86868B] mb-1">Status</label>
+              <select
+                value={replyStatus}
+                onChange={(e) => setReplyStatus(e.target.value as any)}
+                className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
+              >
+                <option value="Under Review">Under Review</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
 
-              <div>
-                <label className="block text-[#86868B] mb-1">Notes (Optional)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Details..."
-                  value={reportNotes}
-                  onChange={(e) => setReportNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F5F5F7] rounded-xl outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReportModalResource(null)}
-                  className="px-3 py-1.5 text-xs text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded-full cursor-pointer font-medium"
-                >
-                  Report
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ADMIN AUTH MODAL */}
-      {isAdminAuthModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-xs w-full p-6 text-center animate-scale-up">
-            <h3 className="text-base font-semibold text-[#1D1D1F]">Administrator Passcode</h3>
-            <p className="text-xs text-[#86868B] mt-1 mb-5">
-              Enter your four-digit passcode.
-            </p>
-
-            <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
-              <input
-                type="password"
-                required
-                autoFocus
-                placeholder="••••"
-                value={adminPinInput}
-                onChange={(e) => {
-                  setAdminPinInput(e.target.value);
-                  setAdminAuthError(false);
-                }}
-                className="w-full px-4 py-2.5 bg-[#F5F5F7] text-center text-xl tracking-widest font-mono rounded-xl outline-none focus:bg-white focus:ring-1 focus:ring-[#0071E3]"
+            <div>
+              <label className="block text-xs text-[#86868B] mb-1">Executive Message</label>
+              <textarea
+                rows={3}
+                placeholder="Type response for the student to see when tracking this ticket..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-[#F5F5F7] rounded-xl outline-none"
               />
-              {adminAuthError && (
-                <p className="text-xs text-red-600 font-medium">Incorrect passcode.</p>
-              )}
+            </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAdminAuthModalOpen(false)}
-                  className="flex-1 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] hover:bg-[#D8D8DD] rounded-full cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 apple-button-primary py-2 text-xs font-medium cursor-pointer"
-                >
-                  Sign In
-                </button>
-              </div>
-            </form>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setTicketReplyModal(null)}
+                className="px-4 py-2 text-xs font-medium text-[#1D1D1F] bg-[#E8E8ED] rounded-full"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveTicketReply}
+                className="px-5 py-2 text-xs font-medium text-white bg-[#0071E3] rounded-full"
+              >
+                Update Ticket
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Apple-style Minimal Footer */}
-      <footer className="border-t border-black/5 bg-[#F5F5F7] py-10 text-xs text-[#86868B]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="font-medium text-[#1D1D1F]">
-              Department of Business Administration
-            </div>
-            <div className="flex items-center gap-4 text-xs">
-              <a
-                href={GOOGLE_DRIVE_FOLDER_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#0071E3] hover:underline inline-flex items-center gap-1 font-medium"
-              >
-                <span>Google Drive Repository</span>
-                <ArrowUpRight className="w-3 h-3" />
-              </a>
-              <button
-                onClick={() => {
-                  if (isAdminLoggedIn) {
-                    setActiveSection('admin');
-                  } else {
-                    setIsAdminAuthModalOpen(true);
-                  }
-                }}
-                className="hover:text-[#1D1D1F] cursor-pointer"
-              >
-                {isAdminLoggedIn ? 'Console' : 'Admin'}
-              </button>
-            </div>
+      {/* Apple-style Footer */}
+      <footer className="mt-auto border-t border-black/5 bg-white py-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#86868B]">
+          <div>
+            Department of Business Administration · University of Maiduguri
           </div>
-          <div className="text-[11px] text-[#A1A1A6]">
-            Copyright © 2026 Department of Business Administration. All rights reserved.
+          <div className="flex items-center gap-4">
+            <a
+              href={GOOGLE_DRIVE_FOLDER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#0071E3] hover:underline inline-flex items-center gap-1 font-medium"
+            >
+              <span>Cloud Drive</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </a>
+            <span>·</span>
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="hover:text-[#1D1D1F] transition cursor-pointer"
+            >
+              EXCOS Admin
+            </button>
           </div>
         </div>
       </footer>
