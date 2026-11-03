@@ -1,0 +1,6 @@
+{
+  "name": "UNIMAID BusAdmin",
+  "description": "Central Academic Resource Platform for the Department of Business Administration, University of Maiduguri.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

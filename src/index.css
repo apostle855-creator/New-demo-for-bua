@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --apple-bg: #F5F5F7;
+    --apple-card: #FFFFFF;
+    --apple-text: #1D1D1F;
+    --apple-secondary: #86868B;
+    --apple-tertiary: #A1A1A6;
+    --apple-blue: #0071E3;
+    --apple-blue-hover: #0077ED;
+    --apple-border: rgba(0, 0, 0, 0.08);
+    --apple-border-strong: rgba(0, 0, 0, 0.16);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: #F5F5F7;
+    color: #1D1D1F;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+/* Apple-style typography classes */
+.apple-display {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #1D1D1F;
+}
+
+.apple-headline {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #1D1D1F;
+}
+
+.apple-subhead {
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: #86868B;
+}
+
+.apple-link {
+  color: #0071E3;
+  transition: opacity 0.15s ease;
+}
+
+.apple-link:hover {
+  opacity: 0.8;
+}
+
+/* Apple Glass & Smooth Shadows */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.apple-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.apple-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.apple-button-primary {
+  background: #0071E3;
+  color: #FFFFFF;
+  font-weight: 500;
+  border-radius: 980px;
+  transition: all 0.2s ease;
+}
+
+.apple-button-primary:hover {
+  background: #0077ED;
+}
+
+.apple-button-secondary {
+  background: #E8E8ED;
+  color: #1D1D1F;
+  font-weight: 500;
+  border-radius: 980px;
+  transition: all 0.2s ease;
+}
+
+.apple-button-secondary:hover {
+  background: #D8D8DD;
+}
+
+/* Custom Apple-inspired minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}

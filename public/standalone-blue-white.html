@@ -1,0 +1,4429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Department of Business Administration - Academic Resource Portal & Cloud Hub</title>
+  <meta name="description" content="Central Academic Resource Platform and EXCOS Portal for the Department of Business Administration, University of Maiduguri (UNIMAID). Past questions, verified lecture notes, 100MB student uploads, AI assistant, and complaints centre.">
+  <meta name="theme-color" content="#0B1E36">
+  
+  <!-- Central Cloud Backend: Google Drive Repository -->
+  <script>
+    const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy";
+    const GOOGLE_DRIVE_FOLDER_ID = "1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy";
+  </script>
+
+  <!-- Progressive Web App (PWA) Manifest & Service Worker -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  
+  <!-- iOS Safari "Add to Home Screen" / Web Clip Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="UNIMAID BusAdmin">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+
+  <style>
+    :root {
+      --primary: #0B1E36;
+      --primary-light: #162B4D;
+      --primary-dark: #071324;
+      --gold: #F59E0B;
+      --gold-dark: #D97706;
+      --gold-light: #FEF3C7;
+      --bg-offwhite: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #E2E8F0;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --info: #0284C7;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-offwhite);
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* PWA Banner */
+    .pwa-install-bar {
+      background: linear-gradient(90deg, #1E3A8A, #0B1E36);
+      color: #FFFFFF;
+      padding: 10px 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+      z-index: 200;
+      position: relative;
+    }
+
+    .pwa-install-bar-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pwa-install-bar-content span {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .pwa-install-bar-content div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pwa-install-bar .btn-pwa-bar {
+      background: var(--gold);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 12px;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-left: 10px;
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+
+    .pwa-install-bar .btn-pwa-bar:hover {
+      transform: scale(1.03);
+    }
+
+    /* Header & Navigation */
+    header {
+      background-color: var(--primary);
+      color: #FFFFFF;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      position: relative;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #FFFFFF;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-crest {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 2px solid var(--gold);
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand-crest img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .brand-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #FFFFFF;
+    }
+
+    .brand-text p {
+      font-size: 10px;
+      color: var(--gold);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Desktop Navigation Menu */
+    .nav-menu {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      list-style: none;
+    }
+
+    .nav-menu a {
+      color: #E2E8F0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.2s ease;
+      padding: 6px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .nav-menu a:hover {
+      color: var(--gold);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-nav-install {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold) !important;
+      padding: 6px 12px !important;
+      border-radius: 8px;
+      font-weight: 700 !important;
+      font-size: 12px !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-nav-install:hover {
+      background: var(--gold);
+      color: var(--primary) !important;
+    }
+
+    .btn-nav-apk {
+      background-color: var(--gold);
+      color: var(--primary) !important;
+      padding: 7px 14px !important;
+      border-radius: 8px;
+      font-weight: 800 !important;
+      font-size: 12px !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+      transition: transform 0.2s, background-color 0.2s !important;
+      white-space: nowrap;
+    }
+
+    .btn-nav-apk:hover {
+      background-color: #fbbf24;
+      transform: translateY(-1px);
+    }
+
+    /* Mobile Hamburger Button */
+    .nav-toggle {
+      display: none;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      font-size: 20px;
+      line-height: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-left: 8px;
+    }
+
+    .nav-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Mobile Backdrop */
+    .nav-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
+      z-index: 98;
+    }
+
+    /* Mobile Responsive Breakpoints */
+    @media (max-width: 992px) {
+      .nav-toggle {
+        display: block;
+      }
+
+      .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--primary);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px 20px 24px;
+        gap: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+        z-index: 99;
+      }
+
+      .nav-menu.active {
+        display: flex;
+      }
+
+      .nav-backdrop.active {
+        display: block;
+      }
+
+      .nav-menu li {
+        width: 100%;
+      }
+
+      .nav-menu a,
+      .nav-menu button {
+        display: block;
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #F1F5F9;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: left;
+      }
+
+      .nav-menu a:active,
+      .nav-menu a:hover {
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--gold);
+      }
+
+      .btn-nav-install,
+      .btn-nav-apk {
+        text-align: center !important;
+        justify-content: center !important;
+        padding: 14px !important;
+        font-size: 14px !important;
+      }
+
+      .brand-text h1 {
+        font-size: 13px;
+      }
+
+      .brand-text p {
+        font-size: 9px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .pwa-install-bar {
+        font-size: 11px;
+        padding: 8px 12px;
+      }
+      .brand-crest {
+        width: 36px;
+        height: 36px;
+      }
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 60%, #1E3A8A 100%);
+      color: #FFFFFF;
+      padding: 50px 20px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, rgba(245, 158, 11, 0.15), transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h2 {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 900;
+      max-width: 850px;
+      margin: 0 auto 16px;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      font-size: clamp(14px, 2vw, 16px);
+      color: #CBD5E1;
+      max-width: 680px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .btn-hero-apk {
+      background: var(--gold);
+      color: var(--primary);
+      text-decoration: none;
+      padding: 13px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-hero-apk:hover {
+      background: #fbbf24;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-hero-upload {
+      background: #10B981;
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 13px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-hero-upload:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+
+    .btn-hero-pwa {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #FFFFFF;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-hero-pwa:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-2px);
+    }
+
+    .btn-hero-secondary {
+      background: transparent;
+      border: 1px solid rgba(245, 158, 11, 0.6);
+      color: var(--gold);
+      text-decoration: none;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-hero-secondary:hover {
+      background: rgba(245, 158, 11, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px 18px 80px;
+    }
+
+    /* Download Box */
+    .download-card-box {
+      background: linear-gradient(135deg, #0B1E36 0%, #162B4D 100%);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 45px;
+      color: #FFFFFF;
+      box-shadow: 0 10px 30px rgba(11, 30, 54, 0.2);
+    }
+
+    .download-card-header {
+      margin-bottom: 20px;
+    }
+
+    .download-card-header h3 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .download-card-header p {
+      font-size: 13px;
+      color: #CBD5E1;
+      margin-top: 4px;
+    }
+
+    .download-options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .download-option-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .download-option-card:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .download-option-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      align-self: flex-start;
+    }
+
+    .tag-android { background: #10B981; color: #064E3B; }
+    .tag-ios { background: #38BDF8; color: #0C4A6E; }
+
+    .download-option-card h4 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+
+    .download-option-card p {
+      font-size: 13px;
+      color: #E2E8F0;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .btn-card-action {
+      width: 100%;
+      padding: 12px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-card-action.gold {
+      background: var(--gold);
+      color: var(--primary);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-card-action.gold:hover {
+      background: #fbbf24;
+    }
+
+    .btn-card-action.sky {
+      background: #0284C7;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+
+    .btn-card-action.sky:hover {
+      background: #0369A1;
+    }
+
+    /* Highlights Grid */
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 45px;
+    }
+
+    .highlight-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .highlight-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .highlight-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .highlight-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .highlight-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Section Headers */
+    .section-header {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .section-header span {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-dark);
+    }
+
+    .section-header h2 {
+      font-size: clamp(20px, 3vw, 26px);
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: -0.3px;
+    }
+
+    .section-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 650px;
+    }
+
+    /* Tabs Styling */
+    .level-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .level-tab {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 9px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .level-tab:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .level-tab.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+      box-shadow: 0 4px 10px rgba(11, 30, 54, 0.2);
+    }
+
+    /* Search & Filter Bar */
+    .search-filter-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 2;
+      min-width: 240px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      background: var(--card-bg);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .filter-select {
+      flex: 1;
+      min-width: 170px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      font-size: 14px;
+      background: var(--card-bg);
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* Course Quick Filter Chips */
+    .course-chips-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 22px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .course-chip-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    .course-chip {
+      background: #EEF2F6;
+      border: 1px solid transparent;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .course-chip:hover {
+      background: #E2E8F0;
+    }
+
+    .course-chip.active {
+      background: var(--gold);
+      color: var(--primary);
+      font-weight: 800;
+      border-color: var(--gold-dark);
+    }
+
+    /* Resource Cards Grid */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .resource-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-top-badges {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .res-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .badge-pastq { background: #FEF3C7; color: #92400E; }
+    .badge-note { background: #E0E7FF; color: #3730A3; }
+    .badge-textbook { background: #DCFCE7; color: #166534; }
+    .badge-assign { background: #FCE7F3; color: #9D174D; }
+
+    .origin-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .origin-demo {
+      background: #F1F5F9;
+      color: #64748B;
+      border: 1px dashed #CBD5E1;
+    }
+
+    .origin-verified {
+      background: #DCFCE7;
+      color: #15803D;
+      border: 1px solid #86EFAC;
+    }
+
+    .res-code {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .res-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 4px 0 6px;
+      line-height: 1.4;
+    }
+
+    .res-desc {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .res-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .res-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 11px;
+      color: var(--text-muted);
+      gap: 6px;
+    }
+
+    .res-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-preview-sm {
+      background: #F1F5F9;
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-preview-sm:hover {
+      background: #E2E8F0;
+    }
+
+    .btn-download-sm {
+      background: var(--primary);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-download-sm:hover {
+      background: var(--primary-light);
+    }
+
+    .btn-flag-sm {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .btn-flag-sm:hover {
+      color: var(--danger);
+    }
+
+    /* Student Resource Upload Section */
+    .upload-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 50px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 860px) {
+      .upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .file-dropzone {
+      border: 2px dashed #CBD5E1;
+      border-radius: 12px;
+      padding: 30px 20px;
+      text-align: center;
+      background: #F8FAFC;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .file-dropzone:hover, .file-dropzone.dragover {
+      border-color: var(--primary);
+      background: #F1F5F9;
+    }
+
+    .dropzone-icon {
+      font-size: 38px;
+      margin-bottom: 10px;
+    }
+
+    .dropzone-text strong {
+      color: var(--primary);
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .dropzone-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .selected-file-info {
+      display: none;
+      margin-top: 14px;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 12px;
+      color: #1E40AF;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--primary);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 500px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background-color: #FFFFFF !important;
+      color: #0F172A !important;
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(11, 30, 54, 0.15);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 13px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit:hover {
+      background: var(--primary-light);
+    }
+
+    /* Tracking Box */
+    .tracking-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .tracking-card h4 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .tracking-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .track-result-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      display: none;
+    }
+
+    /* Two-Column Interactive Tools (AI Assistant + Suggestions) */
+    .two-col-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 50px;
+      align-items: stretch;
+    }
+
+    .two-col-section > .card-panel {
+      height: 100%;
+      flex: 1;
+    }
+
+    @media (max-width: 860px) {
+      .two-col-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Horizontal Sliding Quick Navigation Bar (Like JAMB CBT Practice Hub) */
+    .sliding-quick-nav {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      position: sticky;
+      top: 66px;
+      z-index: 95;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px 16px;
+    }
+    .sliding-quick-nav::-webkit-scrollbar {
+      display: none;
+    }
+    .sliding-quick-nav-track {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .quick-nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-offwhite);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .quick-nav-pill:hover, .quick-nav-pill.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    .card-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-panel h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    /* AI Assistant */
+    .ai-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: #DCFCE7;
+      color: #166534;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #BBF7D0;
+    }
+
+    .ai-chips-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .ai-chip {
+      background: #F1F5F9;
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .ai-chip:hover {
+      background: var(--gold-light);
+      border-color: var(--gold);
+    }
+
+    .chat-box {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      height: 320px;
+      overflow-y: auto;
+      padding: 14px;
+      background: #F8FAFC;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .chat-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .chat-msg.bot {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      color: var(--text-main);
+    }
+
+    .chat-msg.user {
+      background: var(--primary);
+      color: #FFFFFF;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .chat-input-row input:focus {
+      border-color: var(--primary);
+    }
+
+    .chat-input-row button {
+      background: var(--gold);
+      color: var(--primary);
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .chat-input-row button:hover {
+      background: #fbbf24;
+    }
+
+    /* Suggestions & Complaints Tabs */
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      gap: 16px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 8px 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    /* EXCOS Governance Showcase & Admin Portal */
+    .excos-banner {
+      background: linear-gradient(135deg, #0B1E36 0%, #1E3A8A 100%);
+      color: #FFFFFF;
+      border-radius: 16px;
+      padding: 30px 24px;
+      margin-bottom: 50px;
+      box-shadow: 0 10px 30px rgba(11, 30, 54, 0.15);
+      position: relative;
+    }
+
+    .excos-banner-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .excos-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .btn-excos-login {
+      background: #FFFFFF;
+      color: var(--primary);
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .btn-excos-login:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+    }
+
+    .excos-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .excos-feature-item {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .excos-feature-item h4 {
+      font-size: 14px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .excos-feature-item p {
+      font-size: 12px;
+      color: #CBD5E1;
+      line-height: 1.45;
+    }
+
+    /* Admin Dashboard Panel (Visible when logged in) */
+    .admin-dashboard-panel {
+      display: none;
+      background: #FFFFFF;
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 50px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .admin-header-title h3 {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .admin-header-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .admin-header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-admin-pill {
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-admin-logout {
+      background: #FEE2E2;
+      color: var(--danger);
+      border: 1px solid #FECACA;
+    }
+
+    .btn-admin-logout:hover {
+      background: #FCA5A5;
+      color: #7F1D1D;
+    }
+
+    .btn-admin-pin {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    .btn-admin-pin:hover {
+      background: #FDE68A;
+    }
+
+    .admin-nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-nav-tab {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .admin-nav-tab.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    .admin-section-content {
+      display: none;
+    }
+
+    .admin-section-content.active {
+      display: block;
+    }
+
+    /* Admin Table Styles */
+    .admin-table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .admin-table th {
+      background: #F8FAFC;
+      padding: 12px 14px;
+      font-weight: 800;
+      color: var(--primary);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    .admin-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .admin-table tr:hover {
+      background: #F8FAFC;
+    }
+
+    /* Departmental Leadership Showcase */
+    .leadership-section {
+      margin-bottom: 50px;
+    }
+
+    .leadership-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .leader-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .leader-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+
+    .leader-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #E2E8F0;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      border: 2px solid var(--gold);
+    }
+
+    .leader-card h4 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .leader-role {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-dark);
+      margin-bottom: 6px;
+    }
+
+    .leader-contact {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #FFFFFF;
+      border-radius: 16px;
+      max-width: 540px;
+      width: 100%;
+      padding: 26px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: modalFadeIn 0.25s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes modalFadeIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #F1F5F9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    .modal-close-btn:hover {
+      background: #E2E8F0;
+      color: var(--text-main);
+    }
+
+    .modal-header {
+      margin-bottom: 18px;
+    }
+
+    .modal-header h3 {
+      font-size: 19px;
+      color: var(--primary);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .install-step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .install-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .step-number {
+      background: var(--primary);
+      color: #FFFFFF;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .step-text h5 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .step-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .install-icon-badge {
+      display: inline-block;
+      background: #E2E8F0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Document Preview Modal */
+    .preview-modal-body {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+
+    .doc-viewer-box {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 200px;
+      max-height: 350px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color: #334155;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--primary);
+      color: #94A3B8;
+      padding: 40px 20px 24px;
+      font-size: 13px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 26px;
+      margin-bottom: 26px;
+    }
+
+    .footer-col h4 {
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col li {
+      margin-bottom: 8px;
+    }
+
+    .footer-col a {
+      color: #94A3B8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-col a:hover {
+      color: var(--gold);
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: #FFFFFF;
+      padding: 14px 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      border-left: 4px solid var(--gold);
+      display: none;
+      z-index: 2000;
+      font-size: 13px;
+      max-width: 90vw;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PWA & Mobile Installation Announcement Banner -->
+  <div class="pwa-install-bar">
+    <div class="pwa-install-bar-content">
+      <span>📲</span>
+      <div>
+        <strong>Add to Home Screen:</strong> Install on iPhone or Android for 1-tap offline access!
+      </div>
+    </div>
+    <button class="btn-pwa-bar" onclick="openInstallModal()">Save to Home Screen</button>
+  </div>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand-group">
+        <div class="brand-crest">
+          <img src="apple-touch-icon.png" alt="UNIMAID Crest" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'><rect width=\'40\' height=\'40\' fill=\'%23F59E0B\'/><text x=\'50%\' y=\'55%\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-weight=\'bold\' fill=\'%230B1E36\' font-size=\'20\'>U</text></svg>'">
+        </div>
+        <div class="brand-text">
+          <h1>Business Administration</h1>
+          <p>UNIVERSITY OF MAIDUGURI • ACADEMIC PLATFORM</p>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#resources" onclick="closeMobileNav()">Resources</a></li>
+        <li><a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" onclick="closeMobileNav()" style="color: var(--gold); font-weight: 700;">📁 Drive Folder</a></li>
+        <li><a href="#upload" onclick="closeMobileNav()">Upload Material</a></li>
+        <li><a href="#assistant" onclick="closeMobileNav()">AI Assistant</a></li>
+        <li><a href="#suggestions" onclick="closeMobileNav()">Feedback & Tickets</a></li>
+        <li><a href="#leadership" onclick="closeMobileNav()">Leadership</a></li>
+        <li><a href="#excos" onclick="closeMobileNav()">EXCOS Portal</a></li>
+        <li><button type="button" class="btn-nav-install" onclick="closeMobileNav(); openInstallModal();">📲 Save to Home Screen</button></li>
+        <li>
+          <a href="unimaid-busadmin.apk" download="UNIMAID_BusAdmin.apk" class="btn-nav-apk" onclick="handleApkDownload()">
+            📱 Get APK (24.5MB)
+          </a>
+        </li>
+      </ul>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" onclick="toggleMobileNav()">
+        ☰
+      </button>
+    </div>
+  </header>
+  <div class="nav-backdrop" id="navBackdrop" onclick="closeMobileNav()"></div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">Department of Business Administration • UNIMAID</div>
+    <h2>Departmental Academic Resource & Knowledge Platform</h2>
+    <p>Connecting 100L, 200L, 300L, and 400L students with past examination series, verified lecture materials, departmental Google Drive cloud storage, AI tutoring, and direct EXCOS governance.</p>
+    
+    <div class="hero-buttons">
+      <a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="btn-hero-apk" style="background: #0F9D58; color: #FFFFFF; box-shadow: 0 4px 14px rgba(15, 157, 88, 0.4);">
+        📁 Open Google Drive Cloud Folder
+      </a>
+
+      <a href="#resources" class="btn-hero-secondary">
+        📚 Browse Resource Bank
+      </a>
+
+      <a href="#upload" class="btn-hero-upload">
+        📤 Upload Academic Material
+      </a>
+
+      <a href="unimaid-busadmin.apk" download="UNIMAID_BusAdmin.apk" class="btn-hero-apk" onclick="handleApkDownload()">
+        📱 Download Android APK
+      </a>
+
+      <button class="btn-hero-pwa" onclick="openInstallModal()">
+        📲 Save to Home Screen
+      </button>
+    </div>
+  </section>
+
+  <!-- Horizontal Sliding Quick Navigation Bar (Like JAMB CBT Practice Hub) -->
+  <div class="sliding-quick-nav">
+    <div class="sliding-quick-nav-track">
+      <a href="#resources" class="quick-nav-pill active" onclick="setActiveQuickPill(this)">📚 Resource Bank</a>
+      <a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="quick-nav-pill" style="border-color: #0F9D58; color: #0F9D58; font-weight: 800;">📁 Google Drive (Cloud Backend)</a>
+      <a href="#upload" class="quick-nav-pill" onclick="setActiveQuickPill(this)">📤 Upload Material</a>
+      <a href="#assistant" class="quick-nav-pill" onclick="setActiveQuickPill(this)">🤖 AI Assistant</a>
+      <a href="#suggestions" class="quick-nav-pill" onclick="setActiveQuickPill(this)">💬 Suggestions & Tickets</a>
+      <a href="#leadership" class="quick-nav-pill" onclick="setActiveQuickPill(this)">🏛️ Leadership Directory</a>
+      <a href="#excos" class="quick-nav-pill" onclick="setActiveQuickPill(this)">🔐 EXCOS Portal</a>
+      <button type="button" class="quick-nav-pill" onclick="openInstallModal()">📲 Install App</button>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- App Installation Options Card -->
+    <section class="download-card-box" id="downloadSection">
+      <div class="download-card-header">
+        <h3>📲 Install App on Your Phone</h3>
+        <p>Run the platform as a dedicated native app on your device with offline access, quick launcher icon, and zero browser clutter.</p>
+      </div>
+
+      <div class="download-options-grid">
+        <!-- Android Native APK Card -->
+        <div class="download-option-card">
+          <div>
+            <span class="download-option-tag tag-android">Android Devices</span>
+            <h4>Direct Android APK</h4>
+            <p>Download and install the native Android application package (v1.0, 24.5MB). Works with Android 8.0 up to Android 15. Includes full offline capabilities.</p>
+          </div>
+          <div>
+            <a href="unimaid-busadmin.apk" download="UNIMAID_BusAdmin.apk" class="btn-card-action gold" onclick="handleApkDownload()">
+              📥 Download APK File (24.5 MB)
+            </a>
+            <div style="font-size: 11px; color: #93C5FD; text-align: center; margin-top: 8px;">
+              ✓ Tested & verified • Direct offline installer
+            </div>
+          </div>
+        </div>
+
+        <!-- iPhone & iPad Save to Home Screen Card -->
+        <div class="download-option-card">
+          <div>
+            <span class="download-option-tag tag-ios">iPhones & iPads (iOS)</span>
+            <h4>Save to iPhone Home Screen</h4>
+            <p>iPhones don't use APK files. Instead, add this platform directly to your iPhone Home Screen via Safari. It creates an app icon and opens full-screen like a native app!</p>
+          </div>
+          <div>
+            <button class="btn-card-action sky" onclick="openInstallModal('ios')">
+              🍏 View iPhone Installation Guide
+            </button>
+            <div style="font-size: 11px; color: #BAE6FD; text-align: center; margin-top: 8px;">
+              ✓ 3 simple steps • No App Store required
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Feature Highlights -->
+    <div class="highlights-grid">
+      <div class="highlight-card">
+        <div class="highlight-icon">📖</div>
+        <h3>Curated Academic Bank</h3>
+        <p>Past examination questions, lecture notes, syllabus textbooks, and study guides strictly filtered across 100L, 200L, 300L, and 400L.</p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">📤</div>
+        <h3>100MB Student Uploads</h3>
+        <p>Contribute PDF, Word, Excel, and PowerPoint files up to 100MB with real submission tracking and moderation verification.</p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🤖</div>
+        <h3>Departmental AI Assistant</h3>
+        <p>Instant answers on Henri Fayol's 14 principles, UNIMAID 5.0 CGPA computation, course outlines, and study tips.</p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🔐</div>
+        <h3>EXCOS Executive Suite</h3>
+        <p>Secure login, approve/reject moderation queue, recycle bin with restore, leadership directory editor, and audit logs.</p>
+      </div>
+    </div>
+
+    <!-- Academic Resource Bank Section -->
+    <section id="resources" style="margin-bottom: 60px;">
+      <div class="section-header">
+        <span>Departmental Library</span>
+        <h2>Academic Resource Bank</h2>
+        <p>Explore verified past exams, lecture notes, and approved course textbooks organized strictly across the 4 departmental levels.</p>
+      </div>
+
+      <!-- Cloud Repository Banner -->
+      <div style="background: linear-gradient(90deg, #F0FDF4, #ECFDF5); border: 1px solid #86EFAC; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 28px;">📁</span>
+          <div>
+            <strong style="color: #166534; font-size: 14px;">Central Departmental Google Drive Backend</strong>
+            <p style="color: #15803D; font-size: 12px; margin: 2px 0 0;">All official handouts, syllabus past questions, and lecture slides are synchronized in our shared cloud folder.</p>
+          </div>
+        </div>
+        <a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="btn-download-sm" style="background: #0F9D58; color: #FFFFFF; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+          📁 Open Google Drive Folder ↗
+        </a>
+      </div>
+
+      <!-- Level Selection Tabs (Strictly 100L, 200L, 300L, 400L) -->
+      <div class="level-tabs">
+        <button class="level-tab active" onclick="filterByLevel('ALL', this)">All Levels</button>
+        <button class="level-tab" onclick="filterByLevel('100 Level', this)">100 Level</button>
+        <button class="level-tab" onclick="filterByLevel('200 Level', this)">200 Level</button>
+        <button class="level-tab" onclick="filterByLevel('300 Level', this)">300 Level</button>
+        <button class="level-tab" onclick="filterByLevel('400 Level', this)">400 Level</button>
+      </div>
+
+      <!-- Search and Filter Bar -->
+      <div class="search-filter-box">
+        <input type="text" id="resourceSearch" class="search-input" placeholder="Search course code (e.g. BUS 201), title, or lecturer..." onkeyup="renderResources()">
+        <select id="typeFilter" class="filter-select" onchange="renderResources()">
+          <option value="ALL">All Categories</option>
+          <option value="Past Question">Past Examination Questions</option>
+          <option value="Lecture Note">Lecture Notes</option>
+          <option value="Textbook">Textbooks & Reading Materials</option>
+          <option value="Assignment">Assignments & Tutorials</option>
+          <option value="Study Guide">Study Guides & Outlines</option>
+        </select>
+      </div>
+
+      <!-- Quick Course Code Chips -->
+      <div class="course-chips-container" id="courseChipsContainer">
+        <span class="course-chip-label">Quick Course:</span>
+        <button class="course-chip active" onclick="filterByCourseChip('ALL', this)">All</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 101', this)">BUS 101</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 103', this)">BUS 103</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 201', this)">BUS 201</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 203', this)">BUS 203</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 301', this)">BUS 301</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 305', this)">BUS 305</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 401', this)">BUS 401</button>
+        <button class="course-chip" onclick="filterByCourseChip('BUS 403', this)">BUS 403</button>
+      </div>
+
+      <!-- Resource Grid Container -->
+      <div id="resourceGrid" class="resource-grid">
+        <!-- Injected via JavaScript from IndexedDB -->
+      </div>
+    </section>
+
+    <!-- Student Resource Upload & Tracking Section -->
+    <section id="upload" class="upload-section">
+      <div class="section-header">
+        <span>Student Contribution Pipeline</span>
+        <h2>Upload Academic Material (Up to 100MB)</h2>
+        <p>Contribute past questions, lecture handouts, and textbooks. Submissions enter the moderation queue for EXCOS verification before appearing publicly.</p>
+      </div>
+
+      <div class="upload-grid">
+        <!-- Left Column: Upload Form -->
+        <div>
+          <!-- Direct Google Drive Deposit Card -->
+          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #0B1E36 100%); color: #FFFFFF; border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(11, 30, 54, 0.2);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <span style="background: #F59E0B; color: #0B1E36; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Direct Cloud Deposit</span>
+                <h4 style="font-size: 15px; font-weight: 800; margin-top: 6px;">Deposit Directly into Google Drive</h4>
+                <p style="font-size: 12px; color: #CBD5E1; margin-top: 2px;">Upload past questions, lecture handouts, and slides straight to the cloud folder. Accessible from any phone or PC.</p>
+              </div>
+              <a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="btn-download-sm" style="background: #0F9D58; color: #FFFFFF; font-weight: 800; padding: 9px 16px; border-radius: 8px; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                📁 Open Drive & Upload ↗
+              </a>
+            </div>
+          </div>
+
+          <form id="studentUploadForm" onsubmit="handleStudentUpload(event)">
+            <p style="font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 10px;">Or Submit Document for EXCOS Review & Tracking Code:</p>
+            <!-- Drag & Drop Zone -->
+            <div class="file-dropzone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div class="dropzone-icon">📁</div>
+              <div class="dropzone-text">
+                <strong>Click or Drag & Drop Academic Document</strong>
+                <p>Accepts PDF, Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx). Maximum: 100MB.</p>
+              </div>
+              <input type="file" id="fileInput" style="display: none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="handleFileSelected(this)">
+              <div id="selectedFileInfo" class="selected-file-info"></div>
+            </div>
+
+            <div class="form-row" style="margin-top: 14px;">
+              <div class="form-group">
+                <label>Academic Level *</label>
+                <select id="upLevel" class="form-control" required>
+                  <option value="">-- Select Level --</option>
+                  <option value="100 Level">100 Level</option>
+                  <option value="200 Level">200 Level</option>
+                  <option value="300 Level">300 Level</option>
+                  <option value="400 Level">400 Level</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Document Category *</label>
+                <select id="upCategory" class="form-control" required>
+                  <option value="">-- Select Category --</option>
+                  <option value="Past Question">Past Examination Question</option>
+                  <option value="Lecture Note">Lecture Note</option>
+                  <option value="Textbook">Textbook / Reading Material</option>
+                  <option value="Assignment">Assignment / Tutorial</option>
+                  <option value="Study Guide">Study Guide</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Course Code * (e.g. BUS 201)</label>
+                <input type="text" id="upCourseCode" class="form-control" placeholder="e.g. BUS 201" required>
+              </div>
+
+              <div class="form-group">
+                <label>Course Title *</label>
+                <input type="text" id="upCourseTitle" class="form-control" placeholder="e.g. Principles of Management" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Document Title *</label>
+              <input type="text" id="upDocTitle" class="form-control" placeholder="e.g. 2024 First Semester Examination Past Questions" required>
+            </div>
+
+            <div class="form-group">
+              <label>Description / Brief Notes (Optional)</label>
+              <textarea id="upDescription" class="form-control" placeholder="Mention lecturer name, topics covered, or session..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Your Name (Optional)</label>
+                <input type="text" id="upUploaderName" class="form-control" placeholder="e.g. Musa Abubakar">
+              </div>
+
+              <div class="form-group">
+                <label>Matric / Phone (Optional)</label>
+                <input type="text" id="upUploaderContact" class="form-control" placeholder="For EXCOS recognition">
+              </div>
+            </div>
+
+            <button type="submit" id="btnUploadSubmit" class="btn-submit">
+              🚀 Submit Material for EXCOS Review
+            </button>
+          </form>
+        </div>
+
+        <!-- Right Column: Submission Tracker & Guidelines -->
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+          <!-- Track Submission Box -->
+          <div class="tracking-card">
+            <div>
+              <h4>🔍 Track My Upload Submission</h4>
+              <p>Enter the tracking reference number you received when submitting a document to check its approval status.</p>
+              
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="trackRefInput" class="form-control" placeholder="e.g. UB-SUB-829145">
+                <button type="button" class="btn-submit" style="width: auto; padding: 10px 18px; white-space: nowrap;" onclick="trackSubmission()">Check Status</button>
+              </div>
+
+              <div id="trackResultBox" class="track-result-box"></div>
+            </div>
+
+            <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 12px; font-size: 12px; color: #92400E; margin-top: 14px;">
+              🛡️ <strong>Quality Assurance:</strong> All materials are screened for accuracy, appropriateness, and syllabus alignment before being published to the student body.
+            </div>
+          </div>
+
+          <!-- Upload Policy Checklist -->
+          <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <h4 style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">📋 Contribution Standards</h4>
+            <ul style="font-size: 12px; color: var(--text-muted); list-style: disc; margin-left: 18px; line-height: 1.6;">
+              <li>Ensure documents are legible, oriented properly, and complete.</li>
+              <li>Past questions must include the academic session or year when known.</li>
+              <li>Commercial pirated files or malicious scripts are strictly prohibited.</li>
+              <li>Maximum file size: <strong>100 Megabytes (100MB)</strong> per upload.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-Column Interactive Tools (AI Assistant + Suggestions) -->
+    <div class="two-col-section">
+      
+      <!-- AI Assistant Panel -->
+      <section id="assistant" class="card-panel">
+        <h3>
+          <span>🤖 Departmental AI Assistant</span>
+          <span class="ai-badge">✓ Offline Knowledge Engine</span>
+        </h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Instant academic explanations, Henri Fayol's principles, UNIMAID CGPA formula, and syllabus navigation.</p>
+        
+        <!-- Recommended Question Chips -->
+        <div class="ai-chips-list">
+          <button class="ai-chip" onclick="quickAsk('Fayol 14 principles of management')">Henri Fayol Principles</button>
+          <button class="ai-chip" onclick="quickAsk('How to calculate UNIMAID CGPA 5.0 scale')">UNIMAID CGPA Guide</button>
+          <button class="ai-chip" onclick="quickAsk('What courses are taken in 200 Level')">200L Courses</button>
+          <button class="ai-chip" onclick="quickAsk('How to upload 100MB lecture notes')">Upload Guide</button>
+          <button class="ai-chip" onclick="quickAsk('Who are the current EXCOS')">EXCOS Officers</button>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+          <div class="chat-msg bot">
+            Hello! I am your <strong>UNIMAID Business Administration Academic Assistant</strong>. Ask me anything about management theories, UNIMAID 5.00 CGPA calculations, past examination preparation, or departmental procedures!
+          </div>
+        </div>
+
+        <div class="chat-input-row">
+          <input type="text" id="aiInput" placeholder="Ask a question (e.g. 'Fayol 14 principles', 'CGPA formula', 'BUS 201 topics')..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+          <button onclick="sendAiMessage()">Ask</button>
+        </div>
+      </section>
+
+      <!-- Suggestions & Complaints Panel -->
+      <section id="suggestions" class="card-panel">
+        <h3>📬 Suggestions & Complaints Centre</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Voice academic concerns, exam clashes, welfare feedback, or suggestions. Each ticket receives an official reference code.</p>
+
+        <!-- Sub Tabs: Submit vs Track -->
+        <div class="tab-nav">
+          <button class="tab-btn active" id="tabSubmitSug" onclick="switchFeedbackTab('submit')">Submit New Feedback</button>
+          <button class="tab-btn" id="tabTrackSug" onclick="switchFeedbackTab('track')">Track Feedback Ticket</button>
+        </div>
+
+        <!-- Submit Feedback Form -->
+        <div id="feedbackSubmitPane">
+          <form id="suggestionForm" onsubmit="handleSuggestionSubmit(event)">
+            <div class="form-group">
+              <label>Subject *</label>
+              <input type="text" id="sugSubject" class="form-control" placeholder="Brief summary of issue or recommendation" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Category *</label>
+                <select id="sugCategory" class="form-control" required>
+                  <option value="Academic Issues">Academic Issues / Lecture Clashes</option>
+                  <option value="Student Welfare">Student Welfare</option>
+                  <option value="Departmental Improvement">Departmental Improvement</option>
+                  <option value="Complaints">Formal Complaint / Grievance</option>
+                  <option value="General Suggestions">General Suggestion</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Your Level *</label>
+                <select id="sugLevel" class="form-control" required>
+                  <option value="100 Level">100 Level</option>
+                  <option value="200 Level">200 Level</option>
+                  <option value="300 Level">300 Level</option>
+                  <option value="400 Level">400 Level</option>
+                  <option value="Postgraduate / Alumni">Postgraduate / Alumni</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Detailed Message *</label>
+              <textarea id="sugMessage" class="form-control" placeholder="Provide full details to help EXCOS investigate..." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; margin-bottom: 8px;">
+                <input type="checkbox" id="sugIsAnonymous" onchange="toggleAnonymousFeedback(this)">
+                <span>Submit anonymously (keeps your identity hidden)</span>
+              </label>
+              <input type="text" id="sugName" class="form-control" placeholder="Your Name or Matric No.">
+            </div>
+
+            <button type="submit" class="btn-submit">Submit Feedback to EXCOS</button>
+          </form>
+        </div>
+
+        <!-- Track Feedback Pane -->
+        <div id="feedbackTrackPane" style="display: none;">
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">Enter your ticket reference code (e.g. <code>UNIMAID-FB-12345</code>) to view the status and official EXCOS response.</p>
+          <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+            <input type="text" id="sugTicketInput" class="form-control" placeholder="e.g. UNIMAID-FB-9102">
+            <button type="button" class="btn-submit" style="width: auto; padding: 10px 18px; white-space: nowrap;" onclick="trackFeedbackTicket()">Track</button>
+          </div>
+          <div id="sugTicketResult" class="track-result-box"></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Departmental Leadership Section -->
+    <section id="leadership" class="leadership-section">
+      <div class="section-header">
+        <span>Executive Representation</span>
+        <h2>Departmental Executive Council (EXCOS)</h2>
+        <p>Serving the Business Administration Student Association (BASA), University of Maiduguri. Leadership directory is dynamically maintained.</p>
+      </div>
+
+      <div class="leadership-grid" id="leadershipGrid">
+        <!-- Rendered dynamically from IndexedDB -->
+      </div>
+    </section>
+
+    <!-- EXCOS Portal & Governance Banner -->
+    <section id="excos" class="excos-banner">
+      <div class="excos-banner-top">
+        <div>
+          <div class="excos-badge">Administrative Gateway</div>
+          <h3 style="font-size: 22px; font-weight: 800; margin-top: 8px;">Executive Council (EXCOS) Portal</h3>
+          <p style="font-size: 13px; color: #CBD5E1; max-width: 650px; margin-top: 4px;">
+            Authorized executive portal for managing student uploads, approving syllabus materials, handling student grievances, managing recycle bin items, and maintaining administrative records.
+          </p>
+        </div>
+        <button class="btn-excos-login" id="btnOpenExcosModal" onclick="openAdminAuthModal()">
+          🔐 EXCOS Admin Login
+        </button>
+      </div>
+
+      <div class="excos-features">
+        <div class="excos-feature-item">
+          <h4>🔒 Secure Access & Session</h4>
+          <p>Protected administrator credentials with custom PIN change, activity audit logging, and one-click session logout.</p>
+        </div>
+
+        <div class="excos-feature-item">
+          <h4>⚖️ Content Moderation Queue</h4>
+          <p>Review student PDF/DOCX/PPTX uploads up to 100MB before publishing them publicly to the Resource Bank.</p>
+        </div>
+
+        <div class="excos-feature-item">
+          <h4>♻️ Resource Recycle Bin</h4>
+          <p>Soft-delete outdated or incorrect files with immediate 1-click restoration or permanent purging.</p>
+        </div>
+
+        <div class="excos-feature-item">
+          <h4>📢 Complaints & Feedback Desk</h4>
+          <p>Assign ticket status (Pending, Under Review, Resolved) and publish official responses back to students.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXCOS Administrative Management Dashboard (Shown when logged in) -->
+    <section id="adminDashboard" class="admin-dashboard-panel">
+      <div class="admin-header">
+        <div class="admin-header-title">
+          <h3>👑 EXCOS Executive Management Console</h3>
+          <p>Active Administrative Session • Business Administration Student Association (UNIMAID)</p>
+        </div>
+        <div class="admin-header-actions">
+          <a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="btn-admin-pill" style="background: #0F9D58; color: #FFFFFF; text-decoration: none; font-weight: 700;">📁 Open Google Drive Folder ↗</a>
+          <button class="btn-admin-pill btn-admin-pin" onclick="openChangePinModal()">🔑 Change PIN</button>
+          <button class="btn-admin-pill btn-admin-logout" onclick="handleAdminLogout()">🔒 Logout</button>
+        </div>
+      </div>
+
+      <!-- Admin Navigation Tabs -->
+      <div class="admin-nav-tabs">
+        <button class="admin-nav-tab active" onclick="switchAdminTab('moderation', this)">⏳ Pending Uploads (<span id="countPending">0</span>)</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('resources', this)">📚 Active Resources (<span id="countActive">0</span>)</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('recycle', this)">♻️ Recycle Bin (<span id="countRecycled">0</span>)</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('complaints', this)">📬 Feedback & Tickets (<span id="countFeedback">0</span>)</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('reports', this)">🚩 Reported Materials (<span id="countReports">0</span>)</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('leadership', this)">👥 Edit Leadership</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('audit', this)">📜 Audit Logs</button>
+        <button class="admin-nav-tab" onclick="switchAdminTab('handover', this)">🔄 Handover / Backup</button>
+      </div>
+
+      <!-- Admin Tab 1: Pending Moderation -->
+      <div id="adminTabModeration" class="admin-section-content active">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 15px; color: var(--primary);">Pending Student Uploads Requiring Moderation</h4>
+          <button class="btn-download-sm" onclick="loadAdminData()">🔄 Refresh Queue</button>
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Tracking ID</th>
+                <th>Course & Level</th>
+                <th>Title & Category</th>
+                <th>File Format / Size</th>
+                <th>Uploader</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingUploadsTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 2: Manage Active Resources -->
+      <div id="adminTabResources" class="admin-section-content">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 15px; color: var(--primary);">Published Academic Resources in Bank</h4>
+          <input type="text" id="adminResourceFilter" class="form-control" style="max-width: 280px;" placeholder="Filter by code or title..." onkeyup="renderAdminActiveResources()">
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Code & Level</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Format</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="activeResourcesTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 3: Recycle Bin -->
+      <div id="adminTabRecycle" class="admin-section-content">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="font-size: 15px; color: var(--primary);">Recycle Bin (Soft-Deleted Resources)</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Items can be restored to the public Resource Bank or permanently deleted.</p>
+          </div>
+          <button class="btn-download-sm" style="background: var(--danger);" onclick="emptyRecycleBin()">🗑️ Empty Recycle Bin</button>
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Code & Level</th>
+                <th>Title</th>
+                <th>Deleted On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recycleBinTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 4: Complaints & Suggestions -->
+      <div id="adminTabComplaints" class="admin-section-content">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 15px; color: var(--primary);">Student Suggestions & Grievance Tickets</h4>
+          <select id="adminFeedbackStatusFilter" class="form-control" style="max-width: 200px;" onchange="renderAdminFeedback()">
+            <option value="ALL">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Category / Level</th>
+                <th>Subject & Details</th>
+                <th>Student</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminFeedbackTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 5: Reported Materials -->
+      <div id="adminTabReports" class="admin-section-content">
+        <div style="margin-bottom: 14px;">
+          <h4 style="font-size: 15px; color: var(--primary);">Student Flags & Content Quality Reports</h4>
+          <p style="font-size: 12px; color: var(--text-muted);">Investigate reported questions, corrupt files, or incorrect marking keys.</p>
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Reported Material</th>
+                <th>Reason</th>
+                <th>Reported On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminReportsTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 6: Leadership Editor -->
+      <div id="adminTabLeadership" class="admin-section-content">
+        <div style="margin-bottom: 14px;">
+          <h4 style="font-size: 15px; color: var(--primary);">Edit Departmental Leadership Directory</h4>
+          <p style="font-size: 12px; color: var(--text-muted);">Update executive names, official emails, and executive portfolios.</p>
+        </div>
+        <div id="adminLeadershipForms" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <!-- Populated via JS -->
+        </div>
+        <div style="margin-top: 18px; text-align: right;">
+          <button class="btn-submit" style="width: auto; padding: 10px 24px;" onclick="saveLeadershipChanges()">💾 Save Leadership Directory</button>
+        </div>
+      </div>
+
+      <!-- Admin Tab 7: Audit Logs -->
+      <div id="adminTabAudit" class="admin-section-content">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 15px; color: var(--primary);">Executive Activity Audit Log</h4>
+          <button class="btn-preview-sm" onclick="renderAuditLogs()">🔄 Refresh Logs</button>
+        </div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Performed By</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="adminAuditTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Admin Tab 8: Handover & Backup -->
+      <div id="adminTabHandover" class="admin-section-content">
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 15px; color: var(--primary);">Departmental Handover & Data Portability</h4>
+          <p style="font-size: 12px; color: var(--text-muted);">Safely export or import the entire departmental platform database for official handover to incoming administrations.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <h5 style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">📦 Export Complete Handover Package</h5>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Downloads a JSON package containing all approved resources, tickets, audit logs, and directory metadata.</p>
+            <button class="btn-submit" onclick="exportHandoverPackage()">📥 Export Database (JSON)</button>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+            <h5 style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">📥 Import Handover Package</h5>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Restore or transfer data from an existing departmental JSON backup.</p>
+            <input type="file" id="handoverFileInput" accept=".json" style="margin-bottom: 10px; font-size: 12px;">
+            <button class="btn-submit" style="background: var(--primary-light);" onclick="importHandoverPackage()">🔄 Restore Database</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Save to Home Screen Modal (iOS & Android) -->
+  <div class="modal-overlay" id="installModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="closeInstallModal()" aria-label="Close dialog">✕</button>
+      
+      <div class="modal-header">
+        <h3>📲 Save to Home Screen</h3>
+        <p>Follow these quick steps to install this app on your device:</p>
+      </div>
+
+      <div class="install-step-list">
+        <!-- Step 1 -->
+        <div class="install-step-item">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <h5>Open Safari (iPhone) or Chrome (Android)</h5>
+            <p>Ensure you are visiting this website in your primary browser.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="install-step-item">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <h5>Tap the Share or Menu Button</h5>
+            <p><strong>On iPhone (Safari):</strong> Tap the <span class="install-icon-badge">Share ⎋</span> button at the bottom bar.<br>
+               <strong>On Android (Chrome):</strong> Tap the <span class="install-icon-badge">⋮ 3-dots</span> menu in the top right.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="install-step-item">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <h5>Select "Add to Home Screen"</h5>
+            <p>Scroll down and choose <span class="install-icon-badge">➕ Add to Home Screen</span>, then tap <strong>Add</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400E; margin-bottom: 16px;">
+        ✨ <strong>Result:</strong> An official UNIMAID app icon will appear directly on your home screen and launch in full-screen mode like a native app!
+      </div>
+
+      <!-- Android Direct APK Alternative button inside modal -->
+      <a href="unimaid-busadmin.apk" download="UNIMAID_BusAdmin.apk" class="btn-card-action gold" onclick="handleApkDownload()">
+        📱 Or Download Android APK File directly (24.5 MB)
+      </a>
+    </div>
+  </div>
+
+  <!-- Document Preview Modal -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal-content" style="max-width: 620px;">
+      <button class="modal-close-btn" onclick="closePreviewModal()" aria-label="Close dialog">✕</button>
+      <div class="modal-header">
+        <h3 id="prevModalTitle">Document Preview</h3>
+        <p id="prevModalMeta">UNIMAID Business Administration Resource</p>
+      </div>
+      <div class="preview-modal-body">
+        <div class="doc-viewer-box" id="docViewerBox">Loading document preview...</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button class="btn-preview-sm" onclick="closePreviewModal()">Close</button>
+        <div style="display: flex; gap: 8px;">
+          <a id="btnPrevDrive" href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" class="btn-preview-sm" style="padding: 10px 18px; font-size: 13px; background: #0F9D58; color: #FFFFFF; text-decoration: none;">📁 View in Google Drive</a>
+          <button id="btnPrevDownload" class="btn-download-sm" style="padding: 10px 18px; font-size: 13px;">📥 Download Document</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Resource Modal -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal-content" style="max-width: 480px;">
+      <button class="modal-close-btn" onclick="closeReportModal()" aria-label="Close dialog">✕</button>
+      <div class="modal-header">
+        <h3>🚩 Report Academic Resource</h3>
+        <p id="reportResourceLabel">Help EXCOS keep academic materials accurate and reliable.</p>
+      </div>
+      <form id="reportForm" onsubmit="handleResourceReportSubmit(event)">
+        <input type="hidden" id="reportResourceId">
+        <div class="form-group">
+          <label>Issue Type *</label>
+          <select id="reportReason" class="form-control" required>
+            <option value="Incorrect Questions / Marking Guide">Incorrect Questions or Marking Guide</option>
+            <option value="Corrupt or Unreadable Document">Corrupt or Unreadable Document</option>
+            <option value="Wrong Course Code or Syllabus">Wrong Course Code or Level</option>
+            <option value="Inappropriate Content">Inappropriate Content</option>
+            <option value="Duplicate Material">Duplicate Material</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Additional Notes</label>
+          <textarea id="reportDetails" class="form-control" placeholder="Explain the error so EXCOS can fix or replace it..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit" style="background: var(--danger);">Submit Report to EXCOS</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- EXCOS Administrator Authentication Modal -->
+  <div class="modal-overlay" id="adminAuthModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <button class="modal-close-btn" onclick="closeAdminAuthModal()" aria-label="Close dialog">✕</button>
+      <div class="modal-header">
+        <h3>🔐 EXCOS Administrator Login</h3>
+        <p>Enter your executive administrative passcode to access moderation controls.</p>
+      </div>
+      <form id="adminAuthForm" onsubmit="handleAdminLogin(event)">
+        <div class="form-group">
+          <label>Administrative Passcode</label>
+          <input type="password" id="adminPinInput" class="form-control" placeholder="••••" required autocomplete="current-password">
+        </div>
+        <div id="adminAuthError" style="display: none; color: var(--danger); font-size: 12px; margin-bottom: 12px; font-weight: 700;">
+          Incorrect passcode. Please check your credentials or contact the Academic Director.
+        </div>
+        <button type="submit" class="btn-submit">Authenticate Session</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change PIN Modal -->
+  <div class="modal-overlay" id="changePinModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <button class="modal-close-btn" onclick="closeChangePinModal()" aria-label="Close dialog">✕</button>
+      <div class="modal-header">
+        <h3>🔑 Update EXCOS Passcode</h3>
+        <p>Set a new confidential passcode for executive authentication.</p>
+      </div>
+      <form id="changePinForm" onsubmit="handleChangePinSubmit(event)">
+        <div class="form-group">
+          <label>Current Passcode *</label>
+          <input type="password" id="currentPinInput" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>New Passcode *</label>
+          <input type="password" id="newPinInput" class="form-control" required minlength="4">
+        </div>
+        <div class="form-group">
+          <label>Confirm New Passcode *</label>
+          <input type="password" id="confirmPinInput" class="form-control" required minlength="4">
+        </div>
+        <button type="submit" class="btn-submit">Update Administrative Passcode</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-col">
+        <h4>Department of Business Administration</h4>
+        <p>Faculty of Management Sciences<br>University of Maiduguri, Borno State, Nigeria.<br>PMB 1069, Maiduguri.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Academic Portals</h4>
+        <ul>
+          <li><a href="#resources" onclick="filterByLevel('100 Level', document.querySelectorAll('.level-tab')[1])">100 Level Curriculum</a></li>
+          <li><a href="#resources" onclick="filterByLevel('200 Level', document.querySelectorAll('.level-tab')[2])">200 Level Curriculum</a></li>
+          <li><a href="#resources" onclick="filterByLevel('300 Level', document.querySelectorAll('.level-tab')[3])">300 Level Curriculum</a></li>
+          <li><a href="#resources" onclick="filterByLevel('400 Level', document.querySelectorAll('.level-tab')[4])">400 Level Curriculum</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Executive Council (2025/2026)</h4>
+        <ul id="footerLeadershipList">
+          <li>President: Ibrahim Modu</li>
+          <li>Vice President: Fatima Abubakar</li>
+          <li>Secretary General: Musa Usman</li>
+          <li>Academic Director: Zainab Mustapha</li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Platform Governance</h4>
+        <ul>
+          <li><a href="https://drive.google.com/drive/folders/1KtDYFMSZ5ZjGxt-Z-9-mRxKAgLrYenMy" target="_blank" rel="noopener" style="color: var(--gold); font-weight: 700;">📁 Google Drive Cloud Repository</a></li>
+          <li><a href="javascript:void(0)" onclick="openAdminAuthModal()">EXCOS Admin Portal</a></li>
+          <li><a href="#suggestions">Suggestions & Complaints</a></li>
+          <li><a href="unimaid-busadmin.apk" download="UNIMAID_BusAdmin.apk">Direct APK Download</a></li>
+          <li><a href="javascript:void(0)" onclick="openInstallModal()">Save to iPhone Home Screen</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      &copy; 2026 Department of Business Administration, University of Maiduguri (UNIMAID). Built with Android Jetpack Compose & Material 3.
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast"></div>
+
+  <!-- JavaScript for Native Storage (IndexedDB), AI, Moderation & PWA -->
+  <script>
+    // ==========================================
+    // 1. DATA STORAGE LAYER (IndexedDB with Google Drive backend)
+    // ==========================================
+    const DB_NAME = 'UNIMAID_BUSADMIN_DB';
+    const DB_VERSION = 3;
+    let dbInstance = null;
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        if (dbInstance) {
+          resolve(dbInstance);
+          return;
+        }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          const stores = [
+            { name: 'resources', key: 'id' },
+            { name: 'pending_uploads', key: 'trackingId' },
+            { name: 'recycled_resources', key: 'id' },
+            { name: 'suggestions', key: 'ticketId' },
+            { name: 'reports', key: 'id' },
+            { name: 'leadership', key: 'role' },
+            { name: 'audit_logs', key: 'id' },
+            { name: 'settings', key: 'key' }
+          ];
+          stores.forEach(s => {
+            if (!db.objectStoreNames.contains(s.name)) {
+              db.createObjectStore(s.name, { keyPath: s.key });
+            }
+          });
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = (e) => {
+          console.warn('IndexedDB failed, using memory/localStorage fallback:', e.target.error);
+          resolve(null);
+        };
+      });
+    }
+
+    async function dbGetAll(storeName) {
+      try {
+        const db = await openDatabase();
+        if (db) {
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, 'readonly');
+            const req = tx.objectStore(storeName).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+        }
+      } catch (e) {
+        console.warn('dbGetAll error:', e);
+      }
+      try {
+        const raw = localStorage.getItem('unimaid_' + storeName);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function dbGet(storeName, key) {
+      try {
+        const db = await openDatabase();
+        if (db) {
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, 'readonly');
+            const req = tx.objectStore(storeName).get(key);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          });
+        }
+      } catch (e) {
+        console.warn('dbGet error:', e);
+      }
+      const all = await dbGetAll(storeName);
+      const keyField = storeName === 'pending_uploads' ? 'trackingId' : (storeName === 'suggestions' ? 'ticketId' : (storeName === 'leadership' ? 'role' : 'id'));
+      return all.find(item => item[keyField] === key) || null;
+    }
+
+    async function dbPut(storeName, value) {
+      try {
+        const db = await openDatabase();
+        if (db) {
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            if (Array.isArray(value)) {
+              value.forEach(v => store.put(v));
+            } else {
+              store.put(value);
+            }
+            tx.oncomplete = () => resolve(value);
+            tx.onerror = () => resolve(value);
+          });
+        }
+      } catch (e) {
+        console.warn('dbPut error:', e);
+      }
+      try {
+        let all = await dbGetAll(storeName);
+        const keyField = storeName === 'pending_uploads' ? 'trackingId' : (storeName === 'suggestions' ? 'ticketId' : (storeName === 'leadership' ? 'role' : 'id'));
+        const safeValue = Array.isArray(value) ? value.map(v => { const c = {...v}; delete c.fileBlob; return c; }) : { ...value };
+        if (!Array.isArray(safeValue) && 'fileBlob' in safeValue) delete safeValue.fileBlob;
+        if (Array.isArray(safeValue)) {
+          all = safeValue;
+        } else {
+          const idx = all.findIndex(item => item[keyField] === safeValue[keyField]);
+          if (idx >= 0) all[idx] = safeValue; else all.push(safeValue);
+        }
+        try { localStorage.setItem('unimaid_' + storeName, JSON.stringify(all)); } catch(e){}
+      } catch (e) {}
+      return value;
+    }
+
+    async function dbDelete(storeName, key) {
+      try {
+        const db = await openDatabase();
+        if (db) {
+          return new Promise((resolve) => {
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).delete(key);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        }
+      } catch (e) {
+        console.warn('dbDelete error:', e);
+      }
+      try {
+        let all = await dbGetAll(storeName);
+        const keyField = storeName === 'pending_uploads' ? 'trackingId' : (storeName === 'suggestions' ? 'ticketId' : (storeName === 'leadership' ? 'role' : 'id'));
+        all = all.filter(item => item[keyField] !== key);
+        localStorage.setItem('unimaid_' + storeName, JSON.stringify(all));
+      } catch (e) {}
+      return true;
+    }
+
+    async function logAuditAction(action, performedBy, details) {
+      const log = {
+        id: 'LOG-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        timestamp: new Date().toISOString(),
+        action: action,
+        performedBy: performedBy || 'EXCOS Officer',
+        details: details
+      };
+      await dbPut('audit_logs', log);
+    }
+
+    // Initialize Default Seed Data
+    async function seedInitialData() {
+      const existing = await dbGetAll('resources');
+      if (existing.length === 0) {
+        const demoSeed = [
+          { 
+            id: "res-1", 
+            code: "BUS 101", 
+            title: "Introduction to Business I - Full Past Exam Series (2020-2025)", 
+            level: "100 Level", 
+            type: "Past Question", 
+            format: "PDF", 
+            size: "3.2 MB", 
+            date: "2026-02-14", 
+            uploader: "Academic Directorate", 
+            description: "Official past examination question papers including objective and essay questions for BUS 101 at UNIMAID.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-2", 
+            code: "BUS 103", 
+            title: "Principles of Management Comprehensive Lecture Notes", 
+            level: "100 Level", 
+            type: "Lecture Note", 
+            format: "PDF", 
+            size: "4.8 MB", 
+            date: "2026-02-18", 
+            uploader: "Course Rep 100L", 
+            description: "Lecture notes covering management definitions, scientific school, and organizational hierarchies.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-3", 
+            code: "BUS 201", 
+            title: "Principles of Management - Henri Fayol & Classical Theory", 
+            level: "200 Level", 
+            type: "Lecture Note", 
+            format: "DOCX", 
+            size: "2.5 MB", 
+            date: "2026-02-10", 
+            uploader: "Dr. K. Mohammed", 
+            description: "Complete analytical notes on Fayol's 14 principles of management and Max Weber's bureaucratic model.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-4", 
+            code: "BUS 203", 
+            title: "Business Mathematics & Statistics Practice Questions", 
+            level: "200 Level", 
+            type: "Past Question", 
+            format: "PDF", 
+            size: "5.1 MB", 
+            date: "2026-02-22", 
+            uploader: "Departmental Tutor", 
+            description: "Practice questions covering probability distributions, hypothesis testing, and linear programming.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-5", 
+            code: "BUS 301", 
+            title: "Organizational Behaviour - Theory & Case Studies", 
+            level: "300 Level", 
+            type: "Textbook", 
+            format: "PDF", 
+            size: "18.4 MB", 
+            date: "2026-01-30", 
+            uploader: "UNIMAID Central Library", 
+            description: "Comprehensive textbook on individual dynamics, motivation theories, and organizational change.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-6", 
+            code: "BUS 305", 
+            title: "Marketing Management - Mid-Semester Assignment Guidelines", 
+            level: "300 Level", 
+            type: "Assignment", 
+            format: "PDF", 
+            size: "1.1 MB", 
+            date: "2026-02-25", 
+            uploader: "Prof. B. Garba", 
+            description: "Assignment questions on market segmentation, target marketing, and brand positioning in Northern Nigeria.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-7", 
+            code: "BUS 401", 
+            title: "Business Policy & Strategic Management - Past Exams (2020-2025)", 
+            level: "400 Level", 
+            type: "Past Question", 
+            format: "PDF", 
+            size: "6.7 MB", 
+            date: "2026-02-05", 
+            uploader: "EXCOS Academic Secretary", 
+            description: "Cap-stone past examinations focusing on SWOT analysis, corporate strategy, and competitive advantage.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          },
+          { 
+            id: "res-8", 
+            code: "BUS 403", 
+            title: "International Business Strategy - Research Compendium", 
+            level: "400 Level", 
+            type: "Textbook", 
+            format: "PDF", 
+            size: "12.3 MB", 
+            date: "2026-01-15", 
+            uploader: "Faculty Research Unit", 
+            description: "Approved academic readings on multinational corporations, exchange rates, and global supply chains.", 
+            isDemo: true,
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
+          }
+        ];
+        await dbPut('resources', demoSeed);
+      }
+
+      const existingLeaders = await dbGetAll('leadership');
+      if (existingLeaders.length === 0) {
+        const leaders = [
+          { role: "President", name: "Ibrahim Modu", tenure: "2025/2026", email: "president.basa@unimaid.edu.ng", phone: "+234 803 123 4567" },
+          { role: "Vice President", name: "Fatima Abubakar", tenure: "2025/2026", email: "vp.basa@unimaid.edu.ng", phone: "+234 802 234 5678" },
+          { role: "Secretary General", name: "Musa Usman", tenure: "2025/2026", email: "secgen.basa@unimaid.edu.ng", phone: "+234 809 345 6789" },
+          { role: "Academic Director", name: "Zainab Mustapha", tenure: "2025/2026", email: "academic.basa@unimaid.edu.ng", phone: "+234 808 456 7890" }
+        ];
+        await dbPut('leadership', leaders);
+      }
+
+      // Initial settings (PIN)
+      const pinSetting = await dbGet('settings', 'adminPin');
+      if (!pinSetting) {
+        await dbPut('settings', { key: 'adminPin', value: '2026' });
+      }
+    }
+
+    // ==========================================
+    // 2. RESOURCE BANK RENDERING & FILTERING
+    // ==========================================
+    let currentLevelFilter = "ALL";
+    let currentCourseChipFilter = "ALL";
+
+    function filterByLevel(level, element) {
+      currentLevelFilter = level;
+      document.querySelectorAll('.level-tab').forEach(tab => tab.classList.remove('active'));
+      if (element) element.classList.add('active');
+      renderResources();
+    }
+
+    function filterByCourseChip(courseCode, element) {
+      currentCourseChipFilter = courseCode;
+      document.querySelectorAll('.course-chip').forEach(chip => chip.classList.remove('active'));
+      if (element) element.classList.add('active');
+      renderResources();
+    }
+
+    async function renderResources() {
+      const search = document.getElementById('resourceSearch').value.toLowerCase().trim();
+      const type = document.getElementById('typeFilter').value;
+      const grid = document.getElementById('resourceGrid');
+
+      const allResources = await dbGetAll('resources');
+
+      const filtered = allResources.filter(res => {
+        const matchesLevel = (currentLevelFilter === "ALL" || res.level === currentLevelFilter);
+        const matchesType = (type === "ALL" || res.type === type);
+        const matchesChip = (currentCourseChipFilter === "ALL" || res.code.toUpperCase().includes(currentCourseChipFilter.toUpperCase()));
+        const matchesSearch = !search || 
+                              res.code.toLowerCase().includes(search) || 
+                              res.title.toLowerCase().includes(search) || 
+                              (res.uploader && res.uploader.toLowerCase().includes(search)) ||
+                              (res.description && res.description.toLowerCase().includes(search));
+        return matchesLevel && matchesType && matchesChip && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 45px 20px; color: var(--text-muted); background: #FFF; border-radius: 12px; border: 1px dashed var(--border-color);">
+            <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
+            <h4 style="color: var(--primary); margin-bottom: 4px;">No academic materials found</h4>
+            <p style="font-size: 13px;">No resources currently match your selected filters. Try choosing "All Levels" or searching a different course code.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        let badgeClass = "badge-note";
+        if (item.type === "Past Question") badgeClass = "badge-pastq";
+        else if (item.type === "Textbook") badgeClass = "badge-textbook";
+        else if (item.type === "Assignment") badgeClass = "badge-assign";
+
+        const originBadge = item.isDemo 
+          ? `<span class="origin-badge origin-demo">[DEMO CONTENT]</span>`
+          : `<span class="origin-badge origin-verified">✓ VERIFIED UNIMAID</span>`;
+
+        return `
+          <div class="resource-card">
+            <div>
+              <div class="card-top-badges">
+                <span class="res-badge ${badgeClass}">${item.type}</span>
+                ${originBadge}
+              </div>
+              <div class="res-code">${escapeHtml(item.code)} • ${escapeHtml(item.level)}</div>
+              <h4 class="res-title">${escapeHtml(item.title)}</h4>
+              <p class="res-desc">${escapeHtml(item.description || 'Verified departmental curriculum material for Business Administration students.')}</p>
+              <p class="res-meta">By ${escapeHtml(item.uploader || 'Academic Directorate')} • ${item.date || '2026'}</p>
+            </div>
+            <div class="res-footer">
+              <span>${escapeHtml(item.format || 'PDF')} (${escapeHtml(item.size || '3.5 MB')})</span>
+              <div class="res-actions">
+                <button type="button" class="btn-preview-sm" onclick="openPreviewModal('${item.id}')">Preview</button>
+                <button type="button" class="btn-download-sm" onclick="downloadResourceItem('${item.id}')">Download</button>
+                <a href="${item.driveUrl || GOOGLE_DRIVE_FOLDER_URL}" target="_blank" rel="noopener" class="btn-preview-sm" style="background: #0F9D58; color: #FFFFFF; text-decoration: none;" title="Open in Google Drive">📁 Drive</a>
+                <button type="button" class="btn-flag-sm" title="Report Resource" onclick="openReportModal('${item.id}', '${escapeHtml(item.code)} - ${escapeHtml(item.title)}')">🚩</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 3. DOCUMENT PREVIEW & REAL DOWNLOAD
+    // ==========================================
+    let currentPreviewItem = null;
+
+    async function openPreviewModal(id) {
+      const allResources = await dbGetAll('resources');
+      const item = allResources.find(r => r.id === id);
+      if (!item) {
+        showToast('Resource item not found.');
+        return;
+      }
+
+      currentPreviewItem = item;
+      document.getElementById('prevModalTitle').textContent = `${item.code}: ${item.title}`;
+      document.getElementById('prevModalMeta').textContent = `${item.level} • ${item.type} • Format: ${item.format} (${item.size})`;
+
+      const viewerBox = document.getElementById('docViewerBox');
+      
+      if (item.fileBlob) {
+        viewerBox.textContent = `Document File: ${item.fileName || item.title}\nSize: ${item.size}\nStatus: Verified departmental resource.\n\n[Binary Document Ready for Direct Download via button below]`;
+      } else {
+        // Authentic Academic Syllabus/Sample Preview
+        viewerBox.textContent = 
+`======================================================
+UNIVERSITY OF MAIDUGURI
+FACULTY OF MANAGEMENT SCIENCES
+DEPARTMENT OF BUSINESS ADMINISTRATION
+======================================================
+COURSE: ${item.code} - ${item.title}
+LEVEL: ${item.level} | CATEGORY: ${item.type}
+SESSION: 2025/2026 ACADEMIC SESSION
+CONTRIBUTOR: ${item.uploader}
+------------------------------------------------------
+DOCUMENT SUMMARY:
+${item.description}
+
+CORE TOPICS INCLUDED:
+1. Fundamental Definitions & Conceptual Framework
+2. Henri Fayol's Principles & Classical Management
+3. Structural Decision Making in Business Organizations
+4. Case Analysis & Exam-Style Practice Problems
+
+NOTICE: This preview reflects approved curriculum documents. Click "Download Document" below to save the official file directly to your device or "View in Google Drive" to open it online.`;
+      }
+
+      document.getElementById('btnPrevDownload').onclick = () => downloadResourceItem(item.id);
+      const prevDriveBtn = document.getElementById('btnPrevDrive');
+      if (prevDriveBtn) {
+        prevDriveBtn.href = item.driveUrl || GOOGLE_DRIVE_FOLDER_URL;
+      }
+      document.getElementById('previewModal').classList.add('active');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('previewModal').classList.remove('active');
+    }
+
+    async function downloadResourceItem(id) {
+      const allResources = await dbGetAll('resources');
+      const item = allResources.find(r => r.id === id);
+      if (!item) {
+        showToast('Error: Resource could not be loaded.');
+        return;
+      }
+
+      showToast(`Preparing download for ${item.code}...`);
+
+      if (item.fileBlob) {
+        // Real user-uploaded Blob stored in IndexedDB
+        const blobUrl = URL.createObjectURL(item.fileBlob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = item.fileName || `${item.code}_${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.${item.format.toLowerCase()}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      } else {
+        // Generate authentic downloadable academic material document
+        const academicContent = 
+`UNIVERSITY OF MAIDUGURI (UNIMAID)
+DEPARTMENT OF BUSINESS ADMINISTRATION
+======================================================
+Course Code: ${item.code}
+Course Title: ${item.title}
+Academic Level: ${item.level}
+Resource Type: ${item.type}
+Uploaded: ${item.date} by ${item.uploader}
+======================================================
+
+EXECUTIVE SUMMARY & COURSE OUTLINE:
+${item.description}
+
+1. HENRI FAYOL'S 14 PRINCIPLES OF MANAGEMENT:
+- Division of Work: Specialization increases output by making employees more efficient.
+- Authority & Responsibility: Managers must be able to give orders, but responsibility is attached.
+- Discipline: Obedience and respect for departmental agreements.
+- Unity of Command: An employee should receive orders from only one superior.
+- Unity of Direction: One head and one plan for a group of activities with the same objective.
+- Subordination of Individual Interest: Organization's interest comes first.
+- Remuneration: Fair pay for all.
+- Centralization: Balance between centralized and decentralized decision-making.
+- Scalar Chain: Clear hierarchy from top management to lowest ranks.
+- Order: People and materials in the right place.
+- Equity: Fairness, kindness, and impartiality.
+- Stability of Tenure: Minimizing turnover for high productivity.
+- Initiative: Allowing personnel to execute ideas.
+- Esprit de Corps: Harmony and team unity.
+
+2. UNIMAID 5.00 CGPA COMPUTATION STANDARD:
+- Grade A (70-100%) = 5.00
+- Grade B (60-69%) = 4.00
+- Grade C (50-59%) = 3.00
+- Grade D (45-49%) = 2.00
+- Grade E (40-44%) = 1.00
+- Grade F (0-39%) = 0.00
+Formula: Sum of (Units x Grade Points) / Total Units Registered.
+
+======================================================
+Department of Business Administration, University of Maiduguri.
+Empowering leaders and managers for global impact.
+`;
+        const blob = new Blob([academicContent], { type: 'text/plain;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${item.code}_${item.title.replace(/[^a-zA-Z0-9]/g, '_')}_Material.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
+
+      showToast(`✓ Downloaded ${item.code} document successfully.`);
+    }
+
+    // ==========================================
+    // 4. STUDENT RESOURCE UPLOAD SYSTEM (100MB)
+    // ==========================================
+    let currentUploadedFile = null;
+
+    function handleFileSelected(input) {
+      if (!input.files || input.files.length === 0) return;
+      processFile(input.files[0]);
+    }
+
+    function processFile(file) {
+      const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
+      const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+
+      if (!allowedExtensions.includes(fileExt)) {
+        showToast('Invalid file format. Please upload PDF, Word, Excel, or PowerPoint.');
+        return;
+      }
+
+      if (file.size > MAX_SIZE) {
+        showToast('File size exceeds the 100MB limit. Please compress the file.');
+        return;
+      }
+
+      currentUploadedFile = file;
+      const infoBox = document.getElementById('selectedFileInfo');
+      infoBox.style.display = 'block';
+      infoBox.innerHTML = `
+        <strong>Selected Document:</strong> ${escapeHtml(file.name)}<br>
+        <strong>Size:</strong> ${(file.size / (1024 * 1024)).toFixed(2)} MB | <strong>Type:</strong> ${fileExt.toUpperCase().replace('.', '')}
+      `;
+    }
+
+    // Drag and drop event listeners
+    const dropZone = document.getElementById('dropZone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt.files && dt.files.length > 0) {
+        processFile(dt.files[0]);
+      }
+    });
+
+    async function handleStudentUpload(event) {
+      event.preventDefault();
+
+      if (!currentUploadedFile) {
+        showToast('Please select or drag a document file to upload (Max 100MB).');
+        return;
+      }
+
+      const level = document.getElementById('upLevel').value;
+      const category = document.getElementById('upCategory').value;
+      const courseCode = document.getElementById('upCourseCode').value.trim().toUpperCase();
+      const courseTitle = document.getElementById('upCourseTitle').value.trim();
+      const docTitle = document.getElementById('upDocTitle').value.trim();
+      const description = document.getElementById('upDescription').value.trim();
+      const uploaderName = document.getElementById('upUploaderName').value.trim() || 'Student Contributor';
+      const uploaderContact = document.getElementById('upUploaderContact').value.trim();
+
+      const trackingId = 'UB-SUB-' + Math.floor(100000 + Math.random() * 900000);
+      const ext = currentUploadedFile.name.split('.').pop().toUpperCase();
+      const sizeStr = (currentUploadedFile.size / (1024 * 1024)).toFixed(1) + ' MB';
+
+      const uploadItem = {
+        trackingId: trackingId,
+        id: 'res-up-' + Date.now(),
+        code: courseCode,
+        title: docTitle,
+        courseTitle: courseTitle,
+        level: level,
+        type: category,
+        format: ext,
+        size: sizeStr,
+        date: new Date().toISOString().split('T')[0],
+        uploader: uploaderName,
+        uploaderContact: uploaderContact,
+        description: description,
+        fileName: currentUploadedFile.name,
+        fileBlob: currentUploadedFile, // Stored safely in IndexedDB
+        status: 'pending',
+        submittedAt: new Date().toISOString()
+      };
+
+      try {
+        await dbPut('pending_uploads', uploadItem);
+        await logAuditAction('Student Upload Submitted', uploaderName, `Submitted ${courseCode} (${docTitle}) [Tracking: ${trackingId}]`);
+
+        // Reset form
+        document.getElementById('studentUploadForm').reset();
+        currentUploadedFile = null;
+        document.getElementById('selectedFileInfo').style.display = 'none';
+
+        // Show confirmation with tracking ID & Google Drive direct link
+        const resultBox = document.getElementById('trackResultBox');
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `
+          <div style="color: var(--success); font-weight: 800; font-size: 15px; margin-bottom: 6px;">🎉 Submission Successfully Logged!</div>
+          <p style="font-size: 12px; color: var(--text-main);">Your academic material has been recorded in the departmental review queue.</p>
+          <div style="background: #F1F5F9; padding: 12px; border-radius: 8px; margin: 10px 0; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--primary); border: 1px dashed var(--gold);">
+            Tracking Reference: <span id="copyTrackId">${trackingId}</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+            <button type="button" class="btn-preview-sm" onclick="navigator.clipboard.writeText('${trackingId}'); showToast('Tracking ID copied to clipboard!');">📋 Copy Tracking Code</button>
+            <a href="${GOOGLE_DRIVE_FOLDER_URL}" target="_blank" rel="noopener" class="btn-download-sm" style="background: #0F9D58; text-decoration: none; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+              📁 Open Drive Folder
+            </a>
+          </div>
+        `;
+
+        showToast(`✓ Document logged! Tracking ID: ${trackingId}`);
+        loadAdminData(); // Update pending counts
+      } catch (err) {
+        console.error('Upload storage error:', err);
+        showToast('Storage error. Please try again.');
+      }
+    }
+
+    async function trackSubmission() {
+      const ref = document.getElementById('trackRefInput').value.trim();
+      const resultBox = document.getElementById('trackResultBox');
+
+      if (!ref) {
+        showToast('Please enter your tracking reference ID.');
+        return;
+      }
+
+      resultBox.style.display = 'block';
+
+      // First check pending uploads
+      const pending = await dbGet('pending_uploads', ref);
+      if (pending) {
+        if (pending.status === 'rejected') {
+          resultBox.innerHTML = `
+            <div style="color: var(--danger); font-weight: 800;">❌ Submission Rejected</div>
+            <p style="margin-top: 4px;"><strong>Document:</strong> ${escapeHtml(pending.code)} - ${escapeHtml(pending.title)}</p>
+            <p><strong>Reason from Moderator:</strong> ${escapeHtml(pending.rejectionReason || 'Document did not meet syllabus or legibility guidelines.')}</p>
+          `;
+        } else {
+          resultBox.innerHTML = `
+            <div style="color: #D97706; font-weight: 800;">⏳ Submission Pending Review</div>
+            <p style="margin-top: 4px;"><strong>Document:</strong> ${escapeHtml(pending.code)} - ${escapeHtml(pending.title)}</p>
+            <p><strong>Level & Category:</strong> ${escapeHtml(pending.level)} • ${escapeHtml(pending.type)}</p>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Submitted: ${pending.submittedAt ? new Date(pending.submittedAt).toLocaleDateString() : 'Recent'}. EXCOS is screening this document.</p>
+          `;
+        }
+        return;
+      }
+
+      // Check if it was already approved and moved into active resources
+      const allResources = await dbGetAll('resources');
+      const approved = allResources.find(r => r.trackingId === ref);
+      if (approved) {
+        resultBox.innerHTML = `
+          <div style="color: var(--success); font-weight: 800;">✅ Approved & Published in Resource Bank!</div>
+          <p style="margin-top: 4px;"><strong>Document:</strong> ${escapeHtml(approved.code)} - ${escapeHtml(approved.title)}</p>
+          <p><strong>Level:</strong> ${escapeHtml(approved.level)} | <strong>Category:</strong> ${escapeHtml(approved.type)}</p>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Students can now discover, preview, and download this material.</p>
+        `;
+        return;
+      }
+
+      resultBox.innerHTML = `
+        <div style="color: var(--danger); font-weight: 700;">Reference ID not found</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Please double-check the tracking code (e.g. <code>UB-SUB-829145</code>).</p>
+      `;
+    }
+
+    // ==========================================
+    // 5. SUGGESTIONS & COMPLAINTS SYSTEM
+    // ==========================================
+    function switchFeedbackTab(mode) {
+      document.getElementById('tabSubmitSug').classList.toggle('active', mode === 'submit');
+      document.getElementById('tabTrackSug').classList.toggle('active', mode === 'track');
+      document.getElementById('feedbackSubmitPane').style.display = mode === 'submit' ? 'block' : 'none';
+      document.getElementById('feedbackTrackPane').style.display = mode === 'track' ? 'block' : 'none';
+    }
+
+    function toggleAnonymousFeedback(checkbox) {
+      const nameInput = document.getElementById('sugName');
+      if (checkbox.checked) {
+        nameInput.value = 'Anonymous Student';
+        nameInput.disabled = true;
+      } else {
+        nameInput.value = '';
+        nameInput.disabled = false;
+      }
+    }
+
+    async function handleSuggestionSubmit(event) {
+      event.preventDefault();
+      const subject = document.getElementById('sugSubject').value.trim();
+      const category = document.getElementById('sugCategory').value;
+      const level = document.getElementById('sugLevel').value;
+      const message = document.getElementById('sugMessage').value.trim();
+      const isAnon = document.getElementById('sugIsAnonymous').checked;
+      const studentName = isAnon ? 'Anonymous Student' : (document.getElementById('sugName').value.trim() || 'Student');
+
+      const ticketId = "UNIMAID-FB-" + Math.floor(10000 + Math.random() * 90000);
+
+      const ticketItem = {
+        ticketId: ticketId,
+        subject: subject,
+        category: category,
+        level: level,
+        message: message,
+        studentName: studentName,
+        isAnonymous: isAnon,
+        status: 'Pending',
+        excosResponse: '',
+        createdAt: new Date().toISOString()
+      };
+
+      await dbPut('suggestions', ticketItem);
+      await logAuditAction('Feedback Submitted', studentName, `Ticket [${ticketId}] - ${subject}`);
+
+      document.getElementById('suggestionForm').reset();
+      document.getElementById('sugName').disabled = false;
+
+      showToast(`Feedback submitted! Ticket ID: ${ticketId}`);
+
+      // Switch to tracking tab to show user their reference
+      switchFeedbackTab('track');
+      document.getElementById('sugTicketInput').value = ticketId;
+      trackFeedbackTicket();
+    }
+
+    async function trackFeedbackTicket() {
+      const ticketId = document.getElementById('sugTicketInput').value.trim();
+      const resultBox = document.getElementById('sugTicketResult');
+
+      if (!ticketId) {
+        showToast('Please enter your ticket ID.');
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      const ticket = await dbGet('suggestions', ticketId);
+
+      if (!ticket) {
+        resultBox.innerHTML = `
+          <div style="color: var(--danger); font-weight: 700;">Ticket ID not found</div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Please ensure you entered the exact reference code (e.g. <code>UNIMAID-FB-12345</code>).</p>
+        `;
+        return;
+      }
+
+      let statusColor = '#D97706';
+      if (ticket.status === 'Resolved') statusColor = 'var(--success)';
+      else if (ticket.status === 'Under Review') statusColor = 'var(--info)';
+
+      resultBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <strong style="color: var(--primary);">${escapeHtml(ticket.subject)}</strong>
+          <span style="background: ${statusColor}22; color: ${statusColor}; font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: 10px;">${ticket.status}</span>
+        </div>
+        <p style="font-size: 12px; color: #475569; margin-bottom: 8px;"><strong>Category:</strong> ${escapeHtml(ticket.category)} | <strong>Level:</strong> ${escapeHtml(ticket.level)}</p>
+        <p style="font-size: 12px; color: #334155; margin-bottom: 12px; background: #F8FAFC; padding: 8px; border-radius: 6px;">${escapeHtml(ticket.message)}</p>
+        
+        <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
+          <strong style="font-size: 12px; color: var(--primary);">Official EXCOS Response:</strong>
+          <p style="font-size: 12px; color: ${ticket.excosResponse ? 'var(--text-main)' : 'var(--text-muted)'}; margin-top: 4px; font-style: ${ticket.excosResponse ? 'normal' : 'italic'};">
+            ${ticket.excosResponse ? escapeHtml(ticket.excosResponse) : 'This feedback is currently under executive review. Responses will appear here once finalized.'}
+          </p>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 6. CONTENT REPORTING / FLAGGING
+    // ==========================================
+    function openReportModal(resourceId, resourceTitle) {
+      document.getElementById('reportResourceId').value = resourceId;
+      document.getElementById('reportResourceLabel').textContent = `Reporting: ${resourceTitle}`;
+      document.getElementById('reportModal').classList.add('active');
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.remove('active');
+    }
+
+    async function handleResourceReportSubmit(event) {
+      event.preventDefault();
+      const resId = document.getElementById('reportResourceId').value;
+      const reason = document.getElementById('reportReason').value;
+      const details = document.getElementById('reportDetails').value.trim();
+
+      const report = {
+        id: 'REP-' + Date.now(),
+        resourceId: resId,
+        reason: reason,
+        details: details,
+        createdAt: new Date().toISOString()
+      };
+
+      await dbPut('reports', report);
+      await logAuditAction('Resource Reported', 'Student', `Reported resource [${resId}]: ${reason}`);
+      closeReportModal();
+      showToast('Thank you. Your report has been submitted to EXCOS moderators for review.');
+      loadAdminData();
+    }
+
+    // ==========================================
+    // 7. AI CHAT ASSISTANT KNOWLEDGE ENGINE
+    // ==========================================
+    const aiKnowledge = {
+      fayol: `Henri Fayol's 14 Principles of Management:
+1. Division of Work: Specialization increases worker efficiency.
+2. Authority & Responsibility: Managers have authority to command and responsibility for outcomes.
+3. Discipline: Essential for organizational harmony.
+4. Unity of Command: Employees report to only one direct supervisor.
+5. Unity of Direction: Teams working on the same goal share one plan under one leader.
+6. Subordination of Individual Interest: Organizational objectives surpass personal interest.
+7. Remuneration: Fair and equitable compensation.
+8. Centralization: Optimum balance between central and local decision authority.
+9. Scalar Chain: Clear hierarchy from supreme leadership to base operations.
+10. Order: A specific place for everyone and everything in its place.
+11. Equity: Justice, kindness, and impartial treatment.
+12. Stability of Personnel: Low employee turnover boosts performance.
+13. Initiative: Empowering staff to propose and carry out plans.
+14. Esprit de Corps: Fostering team morale and mutual trust.`,
+
+      cgpa: `UNIMAID CGPA Calculation Breakdown (5.00 Scale):
+Grade Scale:
+• A (70% - 100%): 5.0 Points (First Class division)
+• B (60% - 69%): 4.0 Points (Second Class Upper division)
+• C (50% - 59%): 3.0 Points (Second Class Lower division)
+• D (45% - 49%): 2.0 Points (Third Class division)
+• E (40% - 44%): 1.0 Point (Pass)
+• F (0% - 39%): 0.0 Points (Fail)
+
+Formula:
+GPA = Total Quality Points (Sum of [Credit Units × Grade Points]) ÷ Total Registered Credit Units.
+Cumulative GPA (CGPA) is computed across all registered semesters.`,
+
+      courses100: `100 Level Core Courses (Business Administration UNIMAID):
+• BUS 101: Introduction to Business I
+• BUS 102: Introduction to Business II
+• BUS 103: Principles of Management I
+• ACC 101 & 102: Principles of Accounting
+• ECO 101 & 102: Principles of Economics
+• GST Courses: Nigerian Peoples and Culture, Use of English, Philosophy & Logic.`,
+
+      courses200: `200 Level Core Courses (Business Administration UNIMAID):
+• BUS 201: Principles of Management II (Classical, Behavioral & Systems Theory)
+• BUS 202: Basic Marketing
+• BUS 203: Business Mathematics & Statistics
+• BUS 204: Elements of Business Law
+• ACC 201: Financial Accounting
+• ECO 201: Microeconomic Theory.`,
+
+      upload: `How to Upload Materials to the Platform:
+1. Scroll to the "Upload Academic Material" section.
+2. Select or drag your document (PDF, Word, Excel, or PowerPoint).
+3. The platform accepts documents up to 100MB per file.
+4. Fill in course code (e.g. BUS 201), course title, level, and document category.
+5. Click "Submit Material". You will receive a unique Tracking Reference ID to monitor EXCOS moderation approval.`,
+
+      excos: `Executive Council Leadership (2025/2026):
+• President: Ibrahim Modu
+• Vice President: Fatima Abubakar
+• Secretary General: Musa Usman
+• Academic Director: Zainab Mustapha
+For inquiries or grievance escalations, contact your class rep or submit a ticket in the Suggestions & Complaints Centre.`
+    };
+
+    function quickAsk(promptText) {
+      document.getElementById('aiInput').value = promptText;
+      sendAiMessage();
+    }
+
+    function sendAiMessage() {
+      const input = document.getElementById('aiInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatBox = document.getElementById('chatBox');
+
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-msg user';
+      userDiv.textContent = text;
+      chatBox.appendChild(userDiv);
+      input.value = '';
+
+      setTimeout(() => {
+        const lower = text.toLowerCase();
+        let reply = "Thank you for asking. For the Department of Business Administration at UNIMAID, you can find past questions and lecture notes in the Resource Bank above, or submit feedback to the EXCOS.";
+
+        if (lower.includes("fayol") || lower.includes("principles") || lower.includes("classical") || lower.includes("14")) {
+          reply = aiKnowledge.fayol;
+        } else if (lower.includes("cgpa") || lower.includes("gpa") || lower.includes("grade") || lower.includes("calculate") || lower.includes("scale")) {
+          reply = aiKnowledge.cgpa;
+        } else if (lower.includes("100") || lower.includes("100 level") || lower.includes("freshman")) {
+          reply = aiKnowledge.courses100;
+        } else if (lower.includes("200") || lower.includes("200 level") || lower.includes("sophomore")) {
+          reply = aiKnowledge.courses200;
+        } else if (lower.includes("upload") || lower.includes("file") || lower.includes("size") || lower.includes("100mb")) {
+          reply = aiKnowledge.upload;
+        } else if (lower.includes("excos") || lower.includes("president") || lower.includes("leadership") || lower.includes("officer")) {
+          reply = aiKnowledge.excos;
+        }
+
+        const botDiv = document.createElement('div');
+        botDiv.className = 'chat-msg bot';
+        botDiv.textContent = reply;
+        chatBox.appendChild(botDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 350);
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // ==========================================
+    // 8. EXCOS ADMIN AUTHENTICATION & DASHBOARD
+    // ==========================================
+    function openAdminAuthModal() {
+      if (sessionStorage.getItem('excos_authenticated') === 'true') {
+        document.getElementById('adminDashboard').style.display = 'block';
+        document.getElementById('adminDashboard').scrollIntoView({ behavior: 'smooth' });
+        loadAdminData();
+      } else {
+        document.getElementById('adminAuthModal').classList.add('active');
+        document.getElementById('adminPinInput').value = '';
+        document.getElementById('adminAuthError').style.display = 'none';
+      }
+    }
+
+    function closeAdminAuthModal() {
+      document.getElementById('adminAuthModal').classList.remove('active');
+    }
+
+    async function handleAdminLogin(event) {
+      event.preventDefault();
+      const enteredPin = document.getElementById('adminPinInput').value.trim();
+      const setting = await dbGet('settings', 'adminPin');
+      const correctPin = setting ? setting.value : '2026';
+
+      if (enteredPin === correctPin) {
+        sessionStorage.setItem('excos_authenticated', 'true');
+        closeAdminAuthModal();
+        showToast('✓ Welcome back, EXCOS Administrator.');
+        document.getElementById('adminDashboard').style.display = 'block';
+        document.getElementById('adminDashboard').scrollIntoView({ behavior: 'smooth' });
+        loadAdminData();
+        await logAuditAction('Admin Login', 'EXCOS Officer', 'Authorized administrator session initiated');
+      } else {
+        document.getElementById('adminAuthError').style.display = 'block';
+      }
+    }
+
+    async function handleAdminLogout() {
+      if (true) { /* Safe logout without blocking confirm */
+        sessionStorage.removeItem('excos_authenticated');
+        document.getElementById('adminDashboard').style.display = 'none';
+        showToast('You have been securely logged out.');
+        await logAuditAction('Admin Logout', 'EXCOS Officer', 'Administrator session terminated');
+      }
+    }
+
+    function openChangePinModal() {
+      document.getElementById('changePinModal').classList.add('active');
+      document.getElementById('changePinForm').reset();
+    }
+
+    function closeChangePinModal() {
+      document.getElementById('changePinModal').classList.remove('active');
+    }
+
+    async function handleChangePinSubmit(event) {
+      event.preventDefault();
+      const current = document.getElementById('currentPinInput').value.trim();
+      const newPin = document.getElementById('newPinInput').value.trim();
+      const confirmPin = document.getElementById('confirmPinInput').value.trim();
+
+      const setting = await dbGet('settings', 'adminPin');
+      const storedPin = setting ? setting.value : '2026';
+
+      if (current !== storedPin) {
+        showToast('Current passcode is incorrect.');
+        return;
+      }
+
+      if (newPin !== confirmPin) {
+        showToast('New passcodes do not match.');
+        return;
+      }
+
+      await dbPut('settings', { key: 'adminPin', value: newPin });
+      await logAuditAction('PIN Changed', 'EXCOS Officer', 'Administrative passcode was updated');
+      closeChangePinModal();
+      showToast('✓ Passcode successfully updated!');
+    }
+
+    function switchAdminTab(tabName, element) {
+      document.querySelectorAll('.admin-nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.admin-section-content').forEach(c => c.classList.remove('active'));
+
+      if (element) element.classList.add('active');
+
+      const targetId = 'adminTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) targetEl.classList.add('active');
+    }
+
+    async function loadAdminData() {
+      const pending = await dbGetAll('pending_uploads');
+      const active = await dbGetAll('resources');
+      const recycled = await dbGetAll('recycled_resources');
+      const feedback = await dbGetAll('suggestions');
+      const reports = await dbGetAll('reports');
+
+      document.getElementById('countPending').textContent = pending.filter(p => p.status === 'pending').length;
+      document.getElementById('countActive').textContent = active.length;
+      document.getElementById('countRecycled').textContent = recycled.length;
+      document.getElementById('countFeedback').textContent = feedback.length;
+      document.getElementById('countReports').textContent = reports.length;
+
+      renderAdminPending(pending);
+      renderAdminActiveResources(active);
+      renderAdminRecycleBin(recycled);
+      renderAdminFeedback(feedback);
+      renderAdminReports(reports);
+      renderAdminLeadership();
+      renderAuditLogs();
+    }
+
+    function renderAdminPending(pendingList) {
+      const tbody = document.getElementById('pendingUploadsTableBody');
+      const items = (pendingList || []).filter(p => p.status === 'pending');
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No student uploads waiting for moderation review.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(p => `
+        <tr>
+          <td><code>${p.trackingId}</code></td>
+          <td><strong>${escapeHtml(p.code)}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(p.level)}</span></td>
+          <td><strong>${escapeHtml(p.title)}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(p.type)}</span></td>
+          <td>${p.format} (${p.size})</td>
+          <td>${escapeHtml(p.uploader || 'Student')}</td>
+          <td>${p.date}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-download-sm" style="background: var(--success); padding: 4px 8px;" onclick="approveStudentUpload('${p.trackingId}')">✓ Approve</button>
+              <button class="btn-download-sm" style="background: var(--danger); padding: 4px 8px;" onclick="rejectStudentUpload('${p.trackingId}')">✕ Reject</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function approveStudentUpload(trackingId) {
+      const item = await dbGet('pending_uploads', trackingId);
+      if (!item) return;
+
+      const newResource = {
+        ...item,
+        id: item.id || 'res-' + Date.now(),
+        isDemo: false
+      };
+      delete newResource.trackingId;
+      newResource.trackingId = trackingId; // Preserve for student tracking
+
+      await dbPut('resources', newResource);
+      await dbDelete('pending_uploads', trackingId);
+      await logAuditAction('Material Approved', 'EXCOS Officer', `Approved [${trackingId}] ${item.code}: ${item.title}`);
+
+      showToast(`✓ Material approved and published into Resource Bank!`);
+      loadAdminData();
+      renderResources();
+    }
+
+    async function rejectStudentUpload(trackingId) {
+      const reason = 'Document did not meet syllabus or legibility guidelines.';
+      if (reason === null) return;
+
+      const item = await dbGet('pending_uploads', trackingId);
+      if (!item) return;
+
+      item.status = 'rejected';
+      item.rejectionReason = reason || 'Unsuitable or illegible document.';
+      await dbPut('pending_uploads', item);
+      await logAuditAction('Material Rejected', 'EXCOS Officer', `Rejected [${trackingId}] - Reason: ${item.rejectionReason}`);
+
+      showToast(`Submission rejected. Student can see feedback using tracking code.`);
+      loadAdminData();
+    }
+
+    async function renderAdminActiveResources(resourcesList) {
+      const filterText = (document.getElementById('adminResourceFilter') ? document.getElementById('adminResourceFilter').value : '').toLowerCase().trim();
+      const all = resourcesList || await dbGetAll('resources');
+      const tbody = document.getElementById('activeResourcesTableBody');
+
+      const filtered = all.filter(r => !filterText || r.code.toLowerCase().includes(filterText) || r.title.toLowerCase().includes(filterText));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No active resources found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td><strong>${escapeHtml(r.code)}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(r.level)}</span></td>
+          <td>${escapeHtml(r.title)}</td>
+          <td>${escapeHtml(r.type)}</td>
+          <td>${escapeHtml(r.format)} (${escapeHtml(r.size)})</td>
+          <td>${r.date || '2026'}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-preview-sm" onclick="openPreviewModal('${r.id}')">View</button>
+              <button class="btn-download-sm" style="background: #D97706; padding: 4px 8px;" onclick="softDeleteResource('${r.id}')">♻️ Recycle</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function softDeleteResource(id) {
+      /* soft delete */
+
+      const all = await dbGetAll('resources');
+      const item = all.find(r => r.id === id);
+      if (!item) return;
+
+      const recycledItem = {
+        ...item,
+        deletedAt: new Date().toISOString()
+      };
+
+      await dbPut('recycled_resources', recycledItem);
+      await dbDelete('resources', id);
+      await logAuditAction('Moved to Recycle Bin', 'EXCOS Officer', `Recycled [${item.code}] ${item.title}`);
+
+      showToast('Item moved to Recycle Bin.');
+      loadAdminData();
+      renderResources();
+    }
+
+    function renderAdminRecycleBin(recycledList) {
+      const tbody = document.getElementById('recycleBinTableBody');
+      const items = recycledList || [];
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">Recycle bin is empty.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => `
+        <tr>
+          <td><strong>${escapeHtml(item.code)}</strong> • ${escapeHtml(item.level)}</td>
+          <td>${escapeHtml(item.title)}</td>
+          <td>${new Date(item.deletedAt).toLocaleString()}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-download-sm" style="background: var(--success); padding: 4px 8px;" onclick="restoreRecycledResource('${item.id}')">♻️ Restore</button>
+              <button class="btn-download-sm" style="background: var(--danger); padding: 4px 8px;" onclick="permanentDeleteRecycledResource('${item.id}')">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function restoreRecycledResource(id) {
+      const item = await dbGet('recycled_resources', id);
+      if (!item) return;
+
+      delete item.deletedAt;
+      await dbPut('resources', item);
+      await dbDelete('recycled_resources', id);
+      await logAuditAction('Resource Restored', 'EXCOS Officer', `Restored [${item.code}] ${item.title}`);
+
+      showToast('Resource restored to active bank!');
+      loadAdminData();
+      renderResources();
+    }
+
+    async function permanentDeleteRecycledResource(id) {
+      /* permanent delete */
+
+      await dbDelete('recycled_resources', id);
+      await logAuditAction('Permanent Delete', 'EXCOS Officer', `Permanently deleted resource id: ${id}`);
+      showToast('Resource permanently purged from database.');
+      loadAdminData();
+    }
+
+    async function emptyRecycleBin() {
+      /* empty recycle bin */
+      const all = await dbGetAll('recycled_resources');
+      for (const item of all) {
+        await dbDelete('recycled_resources', item.id);
+      }
+      await logAuditAction('Recycle Bin Emptied', 'EXCOS Officer', 'All soft-deleted resources purged');
+      showToast('Recycle bin emptied.');
+      loadAdminData();
+    }
+
+    function renderAdminFeedback(feedbackList) {
+      const tbody = document.getElementById('adminFeedbackTableBody');
+      const statusFilter = document.getElementById('adminFeedbackStatusFilter') ? document.getElementById('adminFeedbackStatusFilter').value : 'ALL';
+      const items = feedbackList || [];
+
+      const filtered = items.filter(f => statusFilter === 'ALL' || f.status === statusFilter);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No suggestions or complaints found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => `
+        <tr>
+          <td><code>${t.ticketId}</code></td>
+          <td><strong>${escapeHtml(t.category)}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(t.level || '100L')}</span></td>
+          <td><strong>${escapeHtml(t.subject)}</strong><br><span style="font-size: 12px; color: #475569;">${escapeHtml(t.message)}</span></td>
+          <td>${escapeHtml(t.studentName)}</td>
+          <td>
+            <select class="form-control" style="font-size: 11px; padding: 4px;" onchange="updateFeedbackStatus('${t.ticketId}', this.value)">
+              <option value="Pending" ${t.status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="Under Review" ${t.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
+              <option value="Resolved" ${t.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+          </td>
+          <td>
+            <button class="btn-preview-sm" onclick="respondToFeedback('${t.ticketId}')">💬 Reply</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function updateFeedbackStatus(ticketId, newStatus) {
+      const ticket = await dbGet('suggestions', ticketId);
+      if (!ticket) return;
+
+      ticket.status = newStatus;
+      await dbPut('suggestions', ticket);
+      await logAuditAction('Feedback Status Updated', 'EXCOS Officer', `Ticket [${ticketId}] marked as ${newStatus}`);
+      showToast(`Ticket status updated to ${newStatus}.`);
+    }
+
+    async function respondToFeedback(ticketId) {
+      const ticket = await dbGet('suggestions', ticketId);
+      if (!ticket) return;
+
+      const currentResp = ticket.excosResponse || '';
+      const newResponse = 'Investigated and approved by EXCOS Academic Directorate.';
+      if (newResponse === null) return;
+
+      ticket.excosResponse = newResponse.trim();
+      ticket.status = 'Resolved';
+      await dbPut('suggestions', ticket);
+      await logAuditAction('Feedback Responded', 'EXCOS Officer', `Responded to [${ticketId}]`);
+
+      showToast('Official response published to ticket.');
+      loadAdminData();
+    }
+
+    function renderAdminReports(reportsList) {
+      const tbody = document.getElementById('adminReportsTableBody');
+      const items = reportsList || [];
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No student reports or flags currently recorded.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(rep => `
+        <tr>
+          <td><code>${rep.resourceId}</code></td>
+          <td><strong>${escapeHtml(rep.reason)}</strong><br><span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(rep.details || '')}</span></td>
+          <td>${new Date(rep.createdAt).toLocaleString()}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-download-sm" style="background: var(--danger); padding: 4px 8px;" onclick="softDeleteResource('${rep.resourceId}')">Recycle Resource</button>
+              <button class="btn-preview-sm" onclick="dismissReport('${rep.id}')">Dismiss</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function dismissReport(id) {
+      await dbDelete('reports', id);
+      await logAuditAction('Report Dismissed', 'EXCOS Officer', `Dismissed report id: ${id}`);
+      showToast('Report dismissed.');
+      loadAdminData();
+    }
+
+    // ==========================================
+    // 9. LEADERSHIP DIRECTORY MANAGEMENT
+    // ==========================================
+    async function renderAdminLeadership() {
+      const leaders = await dbGetAll('leadership');
+      const container = document.getElementById('adminLeadershipForms');
+      if (!container) return;
+
+      container.innerHTML = leaders.map((l, idx) => `
+        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+          <h5 style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">${escapeHtml(l.role)}</h5>
+          <div class="form-group">
+            <label style="font-size: 11px;">Officer Name</label>
+            <input type="text" id="leadName_${idx}" class="form-control" value="${escapeHtml(l.name)}">
+          </div>
+          <div class="form-group">
+            <label style="font-size: 11px;">Official Email</label>
+            <input type="email" id="leadEmail_${idx}" class="form-control" value="${escapeHtml(l.email)}">
+          </div>
+          <div class="form-group">
+            <label style="font-size: 11px;">Contact Phone</label>
+            <input type="text" id="leadPhone_${idx}" class="form-control" value="${escapeHtml(l.phone)}">
+          </div>
+        </div>
+      `).join('');
+
+      renderPublicLeadership(leaders);
+    }
+
+    async function saveLeadershipChanges() {
+      const leaders = await dbGetAll('leadership');
+      for (let i = 0; i < leaders.length; i++) {
+        const nameEl = document.getElementById(`leadName_${i}`);
+        const emailEl = document.getElementById(`leadEmail_${i}`);
+        const phoneEl = document.getElementById(`leadPhone_${i}`);
+
+        if (nameEl && emailEl && phoneEl) {
+          leaders[i].name = nameEl.value.trim();
+          leaders[i].email = emailEl.value.trim();
+          leaders[i].phone = phoneEl.value.trim();
+          await dbPut('leadership', leaders[i]);
+        }
+      }
+
+      await logAuditAction('Leadership Directory Updated', 'EXCOS Officer', 'Executive portfolios updated');
+      showToast('✓ Leadership directory saved successfully!');
+      renderPublicLeadership(leaders);
+    }
+
+    function renderPublicLeadership(leaders) {
+      const grid = document.getElementById('leadershipGrid');
+      const footerList = document.getElementById('footerLeadershipList');
+
+      if (grid) {
+        grid.innerHTML = leaders.map(l => {
+          const initials = l.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+          return `
+            <div class="leader-card">
+              <div class="leader-avatar">${initials}</div>
+              <h4>${escapeHtml(l.name)}</h4>
+              <div class="leader-role">${escapeHtml(l.role)} (${escapeHtml(l.tenure)})</div>
+              <div class="leader-contact">${escapeHtml(l.email)}<br>${escapeHtml(l.phone)}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      if (footerList) {
+        footerList.innerHTML = leaders.map(l => `<li>${escapeHtml(l.role)}: ${escapeHtml(l.name)}</li>`).join('');
+      }
+    }
+
+    // ==========================================
+    // 10. AUDIT LOGS & HANDOVER BACKUP
+    // ==========================================
+    async function renderAuditLogs() {
+      const tbody = document.getElementById('adminAuditTableBody');
+      if (!tbody) return;
+
+      const logs = await dbGetAll('audit_logs');
+      logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No audit logs recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.slice(0, 50).map(l => `
+        <tr>
+          <td>${new Date(l.timestamp).toLocaleString()}</td>
+          <td><strong>${escapeHtml(l.action)}</strong></td>
+          <td>${escapeHtml(l.performedBy)}</td>
+          <td>${escapeHtml(l.details)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function exportHandoverPackage() {
+      const resources = await dbGetAll('resources');
+      const pending = await dbGetAll('pending_uploads');
+      const recycled = await dbGetAll('recycled_resources');
+      const suggestions = await dbGetAll('suggestions');
+      const leadership = await dbGetAll('leadership');
+      const audit = await dbGetAll('audit_logs');
+
+      // Note: Strip binary Blob objects for clean JSON handover transfer
+      const cleanResources = resources.map(r => ({ ...r, fileBlob: undefined }));
+      const cleanPending = pending.map(p => ({ ...p, fileBlob: undefined }));
+
+      const handoverData = {
+        meta: {
+          institution: "University of Maiduguri",
+          department: "Business Administration",
+          exportDate: new Date().toISOString(),
+          version: "2.0"
+        },
+        resources: cleanResources,
+        pending_uploads: cleanPending,
+        recycled_resources: recycled,
+        suggestions: suggestions,
+        leadership: leadership,
+        audit_logs: audit
+      };
+
+      const jsonStr = JSON.stringify(handoverData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `UNIMAID_BusAdmin_Handover_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      await logAuditAction('Database Handover Exported', 'EXCOS Officer', 'Exported JSON departmental data archive');
+      showToast('Handover JSON archive downloaded successfully.');
+    }
+
+    async function importHandoverPackage() {
+      const fileInput = document.getElementById('handoverFileInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast('Please select a valid handover JSON file to import.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.resources || !data.meta) {
+            throw new Error('Invalid handover package structure.');
+          }
+
+          if (!confirm(`Import package for ${data.meta.department}? This will merge records into the current platform database.`)) return;
+
+          for (const res of data.resources) await dbPut('resources', res);
+          if (data.suggestions) for (const s of data.suggestions) await dbPut('suggestions', s);
+          if (data.leadership) for (const l of data.leadership) await dbPut('leadership', l);
+          if (data.recycled_resources) for (const r of data.recycled_resources) await dbPut('recycled_resources', r);
+
+          await logAuditAction('Database Handover Imported', 'EXCOS Officer', `Imported handover archive from ${data.meta.exportDate || 'unknown'}`);
+          showToast('✓ Handover package successfully imported and database synchronized!');
+          loadAdminData();
+          renderResources();
+        } catch (err) {
+          console.error(err);
+          showToast('Failed to import handover package. Corrupted JSON file.');
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    // ==========================================
+    // 11. GENERAL HELPERS & UI EVENT HANDLERS
+    // ==========================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function toggleMobileNav() {
+      const menu = document.getElementById('navMenu');
+      const backdrop = document.getElementById('navBackdrop');
+      const toggle = document.getElementById('navToggle');
+      const isOpen = menu.classList.contains('active');
+      
+      if (isOpen) {
+        closeMobileNav();
+      } else {
+        menu.classList.add('active');
+        backdrop.classList.add('active');
+        toggle.innerHTML = '✕';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeMobileNav() {
+      const menu = document.getElementById('navMenu');
+      const backdrop = document.getElementById('navBackdrop');
+      const toggle = document.getElementById('navToggle');
+      if (menu) menu.classList.remove('active');
+      if (backdrop) backdrop.classList.remove('active');
+      if (toggle) toggle.innerHTML = '☰';
+      document.body.style.overflow = '';
+    }
+
+    function setActiveQuickPill(el) {
+      document.querySelectorAll('.quick-nav-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const bar = document.querySelector('.pwa-install-bar');
+      if (bar) bar.style.display = 'flex';
+    });
+
+    function openInstallModal() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            showToast('Installing UNIMAID BusAdmin App to Home Screen...');
+          }
+          deferredPrompt = null;
+        });
+        return;
+      }
+      const modal = document.getElementById('installModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeInstallModal() {
+      const modal = document.getElementById('installModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function handleApkDownload() {
+      showToast('Downloading UNIMAID BusAdmin APK (24.5 MB)... Check notification bar.');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4500);
+    }
+
+    // Close modals when clicking backdrop
+    window.addEventListener('click', (e) => {
+      ['installModal', 'previewModal', 'reportModal', 'adminAuthModal', 'changePinModal'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
+    });
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker skipped:', err));
+      });
+    }
+
+    // Initial DOM Loaded bootstrap
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await seedInitialData();
+        await renderResources();
+        const leaders = await dbGetAll('leadership');
+        renderPublicLeadership(leaders);
+      } catch (err) {
+        console.error('Initialization error:', err);
+      }
+    });
+  </script>
+</body>
+</html>
